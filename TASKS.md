@@ -1,14 +1,19 @@
 # Tarefas
 
-Roteiro de tarefas em ordem.
+Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de acordo com o resto do projeto.
 
-1. ArquivoJson (persistência de dados)
-2. User, Admin, Contas (wallet, credit, savings)
-3. Menu Usuário, Menu Contas, Menu Login
-4. Autenticação (login, logout, registro)
-5. Transação, crédito, débito
-6. Banco
-7. Menu admin
-8. Relatórios
+- [x] ArquivoJsonl (persistência de dados)
+    - [x] Entity
+    - [x] JsonlRepository
+    - [x] Repository
+    - [x] Injeção de Dependência (substituiu Repositories)
+- [x] User, Admin
+- [ ] Contas (wallet, credit, savings)
+- [ ] Menu Usuário, Menu Contas, Menu Login
+- [ ] Autenticação (login, logout, registro)
+- [ ] Transação, crédito, débito
+- [ ] Banco
+- [ ] Menu admin
+- Relatórios
 
-9. Investimentos
+- Investimentos

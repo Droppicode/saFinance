@@ -1,4 +1,4 @@
-package com.objectfinance;
+package com.safinance;
 
 public class Main {
     public static void main(String[] args) {

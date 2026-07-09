@@ -7,7 +7,7 @@ classDiagram
     %% ----------------------------------------------------
     %% CORE DOMAIN - Interfaces Base (Espaço do Problema)
     %% ----------------------------------------------------
-    class Identifiable {
+    class Entity {
         <<interface>>
         +String getId()
     }
@@ -47,11 +47,11 @@ classDiagram
         +void setYieldRate(YearMonth month, double rate)
         -generateRandomYieldRate(YearMonth month) double
     }
-    Identifiable <|-- User
-    Identifiable <|-- Account
-    Identifiable <|-- Transaction
-    Identifiable <|-- Asset
-    Identifiable <|-- Bank
+    Entity <|-- User
+    Entity <|-- Account
+    Entity <|-- Transaction
+    Entity <|-- Asset
+    Entity <|-- Bank
 
     %% ----------------------------------------------------
     %% DOMAIN - Implementações de Entidades
@@ -227,7 +227,7 @@ classDiagram
         +List~T~ findAll()
     }
     DataRepository <|.. JsonRepository
-    DataRepository ..> Identifiable : manages (gerencia)
+    DataRepository ..> Entity : manages (gerencia)
 
     %% ----------------------------------------------------
     %% CASOS DE USO (Services / Application Layer)
