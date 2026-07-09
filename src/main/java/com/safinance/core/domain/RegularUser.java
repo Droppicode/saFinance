@@ -40,4 +40,17 @@ public class RegularUser implements User {
 
     @Override
     public Role getRole() { return Role.REGULAR; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RegularUser that = (RegularUser) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
