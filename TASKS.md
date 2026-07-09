@@ -8,7 +8,7 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     - [x] Repository
     - [x] Injeção de Dependência (substituiu Repositories)
 - [x] User, Admin
-- [ ] Contas (wallet, credit, savings)
+- [x] Contas (wallet, credit, savings)
 - [ ] Menu Usuário, Menu Contas, Menu Login
 - [ ] Autenticação (login, logout, registro)
 - [ ] Transação, crédito, débito
