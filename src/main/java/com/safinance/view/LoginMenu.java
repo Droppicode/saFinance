@@ -5,10 +5,13 @@ import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.UserUseCase;
 
+import java.util.List;
+import java.util.Collections;
+
 /**
  * Menu de login para a aplicação.
  */
-public class LoginMenu extends BaseMenu {
+public class LoginMenu implements BaseMenu {
 
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
@@ -25,12 +28,19 @@ public class LoginMenu extends BaseMenu {
      * Exibe o menu de login e retorna o próximo estado.
      */
     @Override
-    public BaseMenu render() {
-        printHeader("Login");
-        System.out.print("Email: ");
-        String email = scanner.next();
-        System.out.print("Senha: ");
-        String password = scanner.next();
+    public void renderHeader(PromptService promptService) {
+        promptService.printHeader("Login");
+    }
+
+    @Override
+    public List<String> getOptions() {
+        return Collections.emptyList(); // Sem autocomplete para email/senha
+    }
+
+    @Override
+    public BaseMenu handleInput(PromptService promptService) {
+        String email = promptService.readString("Email: ");
+        String password = promptService.readString("Senha: ");
 
         try { // Fail-Fast: tenta autenticar e falha imediatamente se houver erro
 
@@ -44,20 +54,16 @@ public class LoginMenu extends BaseMenu {
             }
             User user = authUseCase.login(email, password);
             if (user.isAdmin()) {
-                System.out.println("Em desenvolvimento: Menu de Admin ainda não implementado.");
-                System.out.println("pressione Enter para tentar novamente.");
-                scanner.nextLine(); // Consume the newline character
+                promptService.printWarning("Em desenvolvimento: Menu de Admin ainda não implementado.");
+                promptService.readString("pressione Enter para tentar novamente.");
                 return this;
-                // return new AdminMenu();
             } else {
                 return new UserMenu(user, accountUseCase);
             }
         } catch (IllegalArgumentException e) {
-            System.out.println("Erro: " + e.getMessage());
-            System.out.println("Pressione Enter para tentar novamente.");
-            scanner.nextLine(); // Consume the newline character
+            promptService.printError("Erro: " + e.getMessage());
+            promptService.readString("Pressione Enter para tentar novamente.");
             return this; // Retry login (same state)
         }
-        
     }
 }

@@ -20,6 +20,18 @@ import com.safinance.infra.persistence.Repository;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.LoginMenu;
+import com.safinance.view.PromptService;
+
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.ParsedLine;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -57,13 +69,46 @@ public class Main {
         UserUseCase userUseCase = new UserUseCase(userRepository);
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository);
 
-        // 4. Executando o Caso de Uso
+        // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
         try {
+            Terminal terminal = TerminalBuilder.builder().system(true).build();
+            
+            // Completer dinâmico para permitir suporte a autocompletar que muda a cada menu
+            Completer dynamicCompleter = new Completer() {
+                private PromptService ps;
+                public void setPromptService(PromptService promptService) { this.ps = promptService; }
+                @Override
+                public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+                    if (ps != null && ps.getActiveCompleter() != null) {
+                        ps.getActiveCompleter().complete(reader, line, candidates);
+                    }
+                }
+            };
+            
+            LineReader reader = LineReaderBuilder.builder()
+                .terminal(terminal)
+                .completer(dynamicCompleter)
+                .build();
+                
+            PromptService promptService = new PromptService(reader, terminal);
+            
+            // Gambiarra Java para inicializar referência cruzada
+            try {
+                dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
+            } catch (Exception ignore) {}
+            
             BaseMenu currentState = new LoginMenu(authUseCase, userUseCase, accountUseCase);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {
-                currentState = currentState.render();
+                promptService.clearScreen();
+                currentState.renderHeader(promptService);
+                
+                promptService.setActiveCompleter(
+                    new StringsCompleter(currentState.getOptions())
+                );
+                
+                currentState = currentState.handleInput(promptService);
             }
             
         } catch (Exception e) {

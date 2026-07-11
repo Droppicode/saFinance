@@ -2,8 +2,10 @@ package com.safinance.view;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
+import java.util.List;
+import java.util.Arrays;
 
-public class CreateAccountMenu extends BaseMenu {
+public class CreateAccountMenu implements BaseMenu {
 
     private final User user;
     private final AccountUseCase accountUseCase;
@@ -14,10 +16,19 @@ public class CreateAccountMenu extends BaseMenu {
     }
 
     @Override
-    public BaseMenu render() {
-        printHeader("Criar Nova Conta");
-        printOptions("Corrente", "Poupança", "Credito");
-        int option = readOption();
+    public void renderHeader(PromptService promptService) {
+        promptService.printHeader("Criar Nova Conta");
+        promptService.printMenuOptions("Corrente", "Poupança", "Credito");
+    }
+
+    @Override
+    public List<String> getOptions() {
+        return Arrays.asList("1", "2", "3", "0");
+    }
+
+    @Override
+    public BaseMenu handleInput(PromptService promptService) {
+        int option = promptService.readIntOption("> Escolha uma opção: ");
         String accountType;
 
         switch (option) {
@@ -25,37 +36,40 @@ public class CreateAccountMenu extends BaseMenu {
                 accountUseCase.createWalletAccount(user, 0.0, null); 
                 // Cria uma conta corrente com saldo inicial de 0.0
                 // Usuário padão não define o balanço inicial nem o banco, pois isso é feito pelo administrador.
-                System.out.println("Conta corrente criada com sucesso!");
-                System.out.println("Pressione Enter para voltar ao menu anterior.");
-                scanner.nextLine();
+                promptService.printSuccess("Conta corrente criada com sucesso!");
+                promptService.readString("Pressione Enter para voltar ao menu anterior.");
                 return new ManageAccountsMenu(user, accountUseCase);
             case 2:
                 accountUseCase.createSavingsAccount(user, 0.0);
-                System.out.println("Conta poupança criada com sucesso!");
-                System.out.println("Pressione Enter para voltar ao menu anterior.");
-                scanner.nextLine();
+                promptService.printSuccess("Conta poupança criada com sucesso!");
+                promptService.readString("Pressione Enter para voltar ao menu anterior.");
                 return new ManageAccountsMenu(user, accountUseCase);
             case 3:
-                System.out.println("Qual será o limite de crédito da conta?");
-                double creditLimit = scanner.nextDouble();
-                scanner.nextLine(); // Consome o newline pendente do nextDouble
+                double creditLimit = -1;
+                String input = promptService.readString("Qual será o limite de crédito da conta? ");
+                try {
+                    creditLimit = Double.parseDouble(input);
+                } catch (NumberFormatException e) {
+                    promptService.printError("Valor de limite inválido.");
+                    promptService.readString("Pressione Enter para tentar novamente.");
+                    return this;
+                }
+                
                 try {
                     accountUseCase.createCreditAccount(user, 0.0, creditLimit);
-                    System.out.println("Conta de crédito criada com sucesso!");
+                    promptService.printSuccess("Conta de crédito criada com sucesso!");
                 } catch (Exception e) {
-                    System.out.println("Erro ao criar conta de crédito." + e.getMessage());
+                    promptService.printError("Erro ao criar conta de crédito: " + e.getMessage());
                 }
-                System.out.println("Pressione Enter para voltar ao menu anterior.");
-                scanner.nextLine();
+                promptService.readString("Pressione Enter para voltar ao menu anterior.");
                 return new ManageAccountsMenu(user, accountUseCase);
             
             case 0:
                 return new ManageAccountsMenu(user, accountUseCase);
 
             default:
-                System.out.println("Opção inválida.");
-                System.out.println("Pressione Enter para tentar novamente.");
-                scanner.nextLine();
+                promptService.printError("Opção inválida.");
+                promptService.readString("Pressione Enter para tentar novamente.");
                 return this;
         }
     }
