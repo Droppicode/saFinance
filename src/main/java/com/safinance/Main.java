@@ -17,6 +17,7 @@ import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.view.LoginMenu;
 
 public class Main {
@@ -24,34 +25,18 @@ public class Main {
         System.out.println("Iniciando ObjectFinance...\n");
 
         // 1. Inicializa dependências globais de utilidade (Gson com ensinamento para Interfaces)
+        PolymorphicTypeAdapterFactory<Account> accountAdapterFactory = PolymorphicTypeAdapterFactory.of(Account.class)
+            .registerSubtype(CreditAccount.class)
+            .registerSubtype(WalletAccount.class)
+            .registerSubtype(SavingsAccount.class);
+
         Gson gson = new GsonBuilder()
             .registerTypeAdapter(User.class, (JsonDeserializer<User>) (json, typeOfT, context) -> {
                 // Dizemos ao Gson: "Quando pedirem um User, instancie um RegularUser para evitar erro de Interface"
                 // No futuro, podemos ler um campo "role" aqui no JSON para decidir se é AdminUser ou RegularUser.
                 return context.deserialize(json, RegularUser.class);
             })
-            .registerTypeAdapter(Account.class, (JsonSerializer<Account>) (src, typeOfSrc, context) -> {
-                JsonObject json = context.serialize(src).getAsJsonObject();
-                json.addProperty("type", src.getClass().getSimpleName());
-                return json;
-            })
-            .registerTypeAdapter(Account.class, (JsonDeserializer<Account>) (json, typeOfT, context) -> {
-                JsonObject jsonObject = json.getAsJsonObject();
-                String type = jsonObject.has("type") ? jsonObject.get("type").getAsString() : "";
-                
-                if (type.isEmpty()) {
-                    if (jsonObject.has("creditLimit")) type = "CreditAccount";
-                    else if (jsonObject.has("portfolio")) type = "WalletAccount";
-                    else type = "SavingsAccount";
-                }
-                
-                return switch (type) {
-                    case "CreditAccount" -> context.deserialize(json, CreditAccount.class);
-                    case "WalletAccount" -> context.deserialize(json, WalletAccount.class);
-                    case "SavingsAccount" -> context.deserialize(json, SavingsAccount.class);
-                    default -> throw new JsonParseException("Tipo de Account desconhecido: " + type);
-                };
-            })
+            .registerTypeAdapterFactory(accountAdapterFactory)
             .create();
 
         // 2. Cria a Infraestrutura (Onde instanciamos a implementação CONCRETA)
