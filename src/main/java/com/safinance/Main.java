@@ -22,6 +22,8 @@ import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.menus.WelcomeMenu;
 import com.safinance.view.PromptService;
+import com.safinance.core.domain.Bank;
+import java.time.YearMonth;
 
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -58,6 +60,7 @@ public class Main {
         // mas injetamos nela a implementação real (JsonlRepository).
         Repository<User, String> userRepository = new JsonlRepository<>("data/users.jsonl", User.class, gson);
         Repository<Account, String> accountRepository = new JsonlRepository<>("data/accounts.jsonl", Account.class, gson);
+        Bank bank = new Bank(YearMonth.now(), 0.005);
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
         if (userRepository.findById("admin@safinance.com") == null) {
@@ -68,7 +71,7 @@ public class Main {
         // O núcleo de negócios (UseCase) é instanciado recebendo a infraestrutura pelo construtor.
         AuthUseCase authUseCase = new AuthUseCase(userRepository);
         UserUseCase userUseCase = new UserUseCase(userRepository);
-        AccountUseCase accountUseCase = new AccountUseCase(accountRepository);
+        AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
         try {

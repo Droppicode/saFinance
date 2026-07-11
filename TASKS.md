@@ -30,11 +30,11 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
 - [ ] Transação, crédito, débito
 - [ ] Banco
     - [ ] Criar entidade Bank como instância única injetada 
-    - [ ] Rendimento da poupança
-        - [ ] Map<YearMonth, Double> yieldRates
-        - [ ] getYieldRate(YearMonth) — retorna a taxa do mês
-        - [ ] Geração aleatória das taxas dos meses faltantes (ex: pulou do mês 3 pro 7, gera 4,5,6,7)
-        - [ ] setYieldRate(YearMonth, double) — configuração manual pelo admin
+    - [x] Rendimento da poupança
+        - [x] Map<YearMonth, Double> yieldRates
+        - [x] getYieldRate(YearMonth) — retorna a taxa do mês
+        - [x] Geração aleatória das taxas dos meses faltantes (ex: pulou do mês 3 pro 7, gera 4,5,6,7)
+        - [x] setYieldRate(YearMonth, double) — configuração manual pelo admin
     - [ ] Taxas de operação (transferência) via Strategy
         - [ ] Interface TaxStrategy + implementações StandardTax e ExemptTax
         - [ ] operationCost(double amount, String tipo) no Bank 
