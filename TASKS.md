@@ -27,8 +27,6 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     - [x] Criação de conta (já chama CreateAccountMenu, mas precisa consolidar persistência).
     - [ ] Operações de transação (depósito, retirada, transferência).
     = [ ] Aplicar rendimento em poupança.
-
-- [ ] Autenticação (login, logout, registro)
 - [ ] Transação, crédito, débito
 - [ ] Banco
 - [ ] Menu admin
