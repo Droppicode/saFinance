@@ -3,7 +3,13 @@ package com.safinance;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.safinance.core.domain.Account;
+import com.safinance.core.domain.CreditAccount;
+import com.safinance.core.domain.SavingsAccount;
+import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.RegularUser;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
@@ -23,6 +29,28 @@ public class Main {
                 // Dizemos ao Gson: "Quando pedirem um User, instancie um RegularUser para evitar erro de Interface"
                 // No futuro, podemos ler um campo "role" aqui no JSON para decidir se é AdminUser ou RegularUser.
                 return context.deserialize(json, RegularUser.class);
+            })
+            .registerTypeAdapter(Account.class, (JsonSerializer<Account>) (src, typeOfSrc, context) -> {
+                JsonObject json = context.serialize(src).getAsJsonObject();
+                json.addProperty("type", src.getClass().getSimpleName());
+                return json;
+            })
+            .registerTypeAdapter(Account.class, (JsonDeserializer<Account>) (json, typeOfT, context) -> {
+                JsonObject jsonObject = json.getAsJsonObject();
+                String type = jsonObject.has("type") ? jsonObject.get("type").getAsString() : "";
+                
+                if (type.isEmpty()) {
+                    if (jsonObject.has("creditLimit")) type = "CreditAccount";
+                    else if (jsonObject.has("portfolio")) type = "WalletAccount";
+                    else type = "SavingsAccount";
+                }
+                
+                return switch (type) {
+                    case "CreditAccount" -> context.deserialize(json, CreditAccount.class);
+                    case "WalletAccount" -> context.deserialize(json, WalletAccount.class);
+                    case "SavingsAccount" -> context.deserialize(json, SavingsAccount.class);
+                    default -> throw new JsonParseException("Tipo de Account desconhecido: " + type);
+                };
             })
             .create();
 
