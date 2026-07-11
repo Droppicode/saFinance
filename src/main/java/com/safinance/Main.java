@@ -20,7 +20,7 @@ import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.Repository;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.view.BaseMenu;
-import com.safinance.view.WelcomeMenu;
+import com.safinance.view.menus.WelcomeMenu;
 import com.safinance.view.PromptService;
 
 import org.jline.reader.Candidate;

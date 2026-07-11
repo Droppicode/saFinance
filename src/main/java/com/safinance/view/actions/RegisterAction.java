@@ -1,4 +1,8 @@
-package com.safinance.view;
+package com.safinance.view.actions;
+
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+import com.safinance.view.menus.WelcomeMenu;
 
 import com.safinance.core.domain.Role;
 import com.safinance.core.usecases.AccountUseCase;
@@ -11,13 +15,13 @@ import java.util.List;
 /**
  * Menu de Registro (Criação de nova conta de usuário).
  */
-public class RegisterMenu implements BaseMenu {
+public class RegisterAction implements BaseMenu {
 
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
 
-    public RegisterMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public RegisterAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;

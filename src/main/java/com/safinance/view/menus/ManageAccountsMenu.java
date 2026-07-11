@@ -1,4 +1,7 @@
-package com.safinance.view;
+package com.safinance.view.menus;
+
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.CreditAccount;
@@ -6,17 +9,27 @@ import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class ManageAccountsMenu implements BaseMenu {
 
     private final User user;
     private final AccountUseCase accountUseCase;
 
+    private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
+
     public ManageAccountsMenu(User user, AccountUseCase accountUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+
+        registerTransition("1", () -> new CreateAccountMenu(user, accountUseCase), transitions);
+        registerTransition("2", () -> this, transitions);
+        registerTransition("3", () -> this, transitions);
+        registerTransition("0", () -> new UserMenu(user, accountUseCase), transitions);
     }
 
     @Override
@@ -54,30 +67,24 @@ public class ManageAccountsMenu implements BaseMenu {
 
     @Override
     public List<String> getOptions() {
-        return Arrays.asList("1", "2", "3", "0");
+        return new ArrayList<>(transitions.keySet());
     }
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
-        int option = promptService.readIntOption("> Escolha uma opção: ");
+        String option = promptService.readString("> Escolha uma opção: ").trim();
+        Supplier<BaseMenu> transition = transitions.get(option);
 
-        switch (option) {
-            case 1:
-                return new CreateAccountMenu(user, accountUseCase);
-            case 2:
-                promptService.printWarning("Em desenvolvimento: Função de depósito/retirada/transferência ainda não implementada.");
+        if (transition != null) {
+            if (option.equals("2") || option.equals("3")) {
+                promptService.printWarning("Em desenvolvimento: Funcionalidade ainda não implementada.");
                 promptService.readString("Pressione Enter para tentar novamente.");
-                return this;
-            case 3:
-                promptService.printWarning("Em desenvolvimento: Função de aplicar rendimento ainda não implementada.");
-                promptService.readString("Pressione Enter para tentar novamente.");
-                return this;
-            case 0:
-                return new UserMenu(user, accountUseCase);
-            default:
-                promptService.printError("Opção inválida.");
-                promptService.readString("Pressione Enter para retornar.");
-                return this;
+            }
+            return transition.get();
+        } else {
+            promptService.printError("Opção inválida.");
+            promptService.readString("Pressione Enter para tentar novamente.");
+            return this;
         }
     }
     

@@ -1,4 +1,9 @@
-package com.safinance.view;
+package com.safinance.view.actions;
+
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+import com.safinance.view.menus.WelcomeMenu;
+import com.safinance.view.menus.UserMenu;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
@@ -11,14 +16,14 @@ import java.util.Collections;
 /**
  * Menu de login para a aplicação.
  */
-public class LoginMenu implements BaseMenu {
+public class LoginAction implements BaseMenu {
 
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
 
     // Construtor da classe.
-    public LoginMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public LoginAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
