@@ -1,1 +1,1 @@
-{"id":"admin@safinance.com","name":"Admin","email":"admin@safinance.com","passwordHash":"123456"}
+{"type":"RegularUser","id":"admin@safinance.com","name":"Admin","email":"admin@safinance.com","passwordHash":"123456"}

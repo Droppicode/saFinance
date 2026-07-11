@@ -10,6 +10,7 @@ import com.safinance.core.domain.Account;
 import com.safinance.core.domain.CreditAccount;
 import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.WalletAccount;
+import com.safinance.core.domain.AdminUser;
 import com.safinance.core.domain.RegularUser;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
@@ -43,12 +44,12 @@ public class Main {
             .registerSubtype(WalletAccount.class)
             .registerSubtype(SavingsAccount.class);
 
+        PolymorphicTypeAdapterFactory<User> userAdapterFactory = PolymorphicTypeAdapterFactory.of(User.class)
+            .registerSubtype(RegularUser.class)
+            .registerSubtype(AdminUser.class);
+
         Gson gson = new GsonBuilder()
-            .registerTypeAdapter(User.class, (JsonDeserializer<User>) (json, typeOfT, context) -> {
-                // Dizemos ao Gson: "Quando pedirem um User, instancie um RegularUser para evitar erro de Interface"
-                // No futuro, podemos ler um campo "role" aqui no JSON para decidir se é AdminUser ou RegularUser.
-                return context.deserialize(json, RegularUser.class);
-            })
+            .registerTypeAdapterFactory(userAdapterFactory)
             .registerTypeAdapterFactory(accountAdapterFactory)
             .create();
 
