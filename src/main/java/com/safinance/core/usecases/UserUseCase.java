@@ -40,11 +40,11 @@ public class UserUseCase {
     public User createUser(String name, String email, String password, Role role) {
         // Uso direto da dependência, sem acessar Singletons globais.
         if (role == Role.ADMIN) {
-            User adminUser = new AdminUser(java.util.UUID.randomUUID().toString(), name, email, password);
+            User adminUser = new AdminUser(email, name, email, password);
             userRepository.save(adminUser);
             return adminUser;
         } else {
-            User regularUser = new RegularUser(java.util.UUID.randomUUID().toString(), name, email, password);
+            User regularUser = new RegularUser(email, name, email, password);
             userRepository.save(regularUser);
             return regularUser;
         }

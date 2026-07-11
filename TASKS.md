@@ -19,7 +19,7 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     - [x] Implementação da CreditAccount com checagem de limite de crédito
     - [x] Implementação da SavingsAccount preparada para receber juros mensais
     - [x] Criação de Stubs vitais (Asset, AssetPosition, Bank, Transaction) para compilar
-    - [ ] Persistência concreta funcionando (serialização com type)
+    - [x] Persistência concreta funcionando (serialização com type)
 - [ ] Menu Usuário, Menu Contas, Menu Login
     - [x] Fluxo de autenticação
     - [x] Opções básicas para o usuário regular
