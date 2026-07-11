@@ -19,7 +19,15 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     - [x] Implementação da CreditAccount com checagem de limite de crédito
     - [x] Implementação da SavingsAccount preparada para receber juros mensais
     - [x] Criação de Stubs vitais (Asset, AssetPosition, Bank, Transaction) para compilar
+    - [ ] Persistência concreta funcionando (serialização com type)
 - [ ] Menu Usuário, Menu Contas, Menu Login
+    - [x] Fluxo de autenticação
+    - [x] Opções básicas para o usuário regular
+    - [x] Listagem de contas formatada em tabela.
+    - [x] Criação de conta (já chama CreateAccountMenu, mas precisa consolidar persistência).
+    - [ ] Operações de transação (depósito, retirada, transferência).
+    = [ ] Aplicar rendimento em poupança.
+
 - [ ] Autenticação (login, logout, registro)
 - [ ] Transação, crédito, débito
 - [ ] Banco

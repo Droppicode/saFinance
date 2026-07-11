@@ -83,7 +83,7 @@ public class JsonlRepository<T extends Entity> implements Repository<T, String> 
 
     @Override
     public void save(T entity) {
-        String json = gson.toJson(entity);
+        String json = gson.toJson(entity, type);
         try (FileWriter fw = new FileWriter(filePath, true); // true enables append-only mode
              PrintWriter out = new PrintWriter(new BufferedWriter(fw))) {
             
