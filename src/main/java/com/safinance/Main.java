@@ -20,7 +20,7 @@ import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.Repository;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.view.BaseMenu;
-import com.safinance.view.LoginMenu;
+import com.safinance.view.WelcomeMenu;
 import com.safinance.view.PromptService;
 
 import org.jline.reader.Candidate;
@@ -98,7 +98,7 @@ public class Main {
                 dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
             } catch (Exception ignore) {}
             
-            BaseMenu currentState = new LoginMenu(authUseCase, userUseCase, accountUseCase);
+            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {

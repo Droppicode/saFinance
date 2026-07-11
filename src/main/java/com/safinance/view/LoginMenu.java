@@ -29,7 +29,7 @@ public class LoginMenu implements BaseMenu {
      */
     @Override
     public void renderHeader(PromptService promptService) {
-        promptService.printHeader("Login");
+        promptService.printHeader("Fazer Login (Use email 'teste' para logar com admin)");
     }
 
     @Override
@@ -42,8 +42,7 @@ public class LoginMenu implements BaseMenu {
         String email = promptService.readString("Email: ");
         String password = promptService.readString("Senha: ");
 
-        try { // Fail-Fast: tenta autenticar e falha imediatamente se houver erro
-
+        try { 
             if (email.equals("teste")) { // Temporário para teste de funções
                 User loggedIn = authUseCase.login("admin@safinance.com", "123456");
                 return new UserMenu(loggedIn, accountUseCase);
@@ -56,14 +55,14 @@ public class LoginMenu implements BaseMenu {
             if (user.isAdmin()) {
                 promptService.printWarning("Em desenvolvimento: Menu de Admin ainda não implementado.");
                 promptService.readString("pressione Enter para tentar novamente.");
-                return this;
+                return new WelcomeMenu(authUseCase, userUseCase, accountUseCase);
             } else {
                 return new UserMenu(user, accountUseCase);
             }
         } catch (IllegalArgumentException e) {
             promptService.printError("Erro: " + e.getMessage());
             promptService.readString("Pressione Enter para tentar novamente.");
-            return this; // Retry login (same state)
+            return new WelcomeMenu(authUseCase, userUseCase, accountUseCase); // Volta ao ínicio se errar
         }
     }
 }

@@ -1,2 +1,3 @@
 {"id":"8470e6c0-044f-48b7-a2ab-f34414a959fa","ownerId":"admin@safinance.com","balance":0.0,"portfolio":{},"type":"WalletAccount"}
 {"id":"798e6663-7928-4cf6-9127-cbbf6adb083e","ownerId":"admin@safinance.com","balance":0.0,"type":"SavingsAccount"}
+{"type":"WalletAccount","id":"30788ef6-e311-4564-8de0-50b7fdfee359","ownerId":"marcos@teste.com","balance":0.0,"portfolio":{}}
