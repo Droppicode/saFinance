@@ -25,9 +25,8 @@ public class UserMenu extends BaseMenu {
     /**
      * Exibe o menu do usuário.
      */
-    public void showMenu() {
-        while (true) {
-            
+    @Override
+    public BaseMenu render() {
             printHeader("Menu do Usuário");
             System.out.println("Bem-vindo, " + user.getName() + "!");
             printOptions(
@@ -39,33 +38,25 @@ public class UserMenu extends BaseMenu {
             int option = readOption();
             switch (option) {
                 case 1:
-                    new ManageAccountsMenu(user, accountUseCase).showMenu();
-                break;
-            case 2:
-                System.out.println("Em desenvolvimento: Extrato financeiro ainda não implementado.");
-                System.out.println("Pressione Enter para tentar novamente.");
-                scanner.nextLine();
-                clearScreen();
-                showMenu();
-                break;
-            case 3:
-                System.out.println("Em desenvolvimento: Investimentos ainda não implementados.");
-                System.out.println("Pressione Enter para tentar novamente.");
-                scanner.nextLine();
-                clearScreen();
-                showMenu();
-                break;
+                    return new ManageAccountsMenu(user, accountUseCase);
+                case 2:
+                    System.out.println("Em desenvolvimento: Extrato financeiro ainda não implementado.");
+                    System.out.println("Pressione Enter para tentar novamente.");
+                    scanner.nextLine();
+                    return this;
+                case 3:
+                    System.out.println("Em desenvolvimento: Investimentos ainda não implementados.");
+                    System.out.println("Pressione Enter para tentar novamente.");
+                    scanner.nextLine();
+                    return this;
                 case 0:
                     System.out.println("Encerrando sessão. Até logo!");
-                    System.exit(0); // Sai do programa após o usuário sair do menu
-                    default:
-                        System.out.println("Opção inválida.");
-                        System.out.println("Pressione Enter para tentar novamente.");
-                        scanner.nextLine();
-                        clearScreen();
-                        showMenu();
-                        break;
-                    }
-                }
-            }   
+                    return null; // Return null to exit the application or go back to login (Main will handle)
+                default:
+                    System.out.println("Opção inválida.");
+                    System.out.println("Pressione Enter para tentar novamente.");
+                    scanner.nextLine();
+                    return this;
+            }
+    }   
 }

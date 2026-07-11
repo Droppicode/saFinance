@@ -14,7 +14,7 @@ public class CreateAccountMenu extends BaseMenu {
     }
 
     @Override
-    public void showMenu() {
+    public BaseMenu render() {
         printHeader("Criar Nova Conta");
         printOptions("Corrente", "Poupança", "Credito");
         int option = readOption();
@@ -28,16 +28,17 @@ public class CreateAccountMenu extends BaseMenu {
                 System.out.println("Conta corrente criada com sucesso!");
                 System.out.println("Pressione Enter para voltar ao menu anterior.");
                 scanner.nextLine();
-                return;
+                return new ManageAccountsMenu(user, accountUseCase);
             case 2:
                 accountUseCase.createSavingsAccount(user, 0.0);
                 System.out.println("Conta poupança criada com sucesso!");
                 System.out.println("Pressione Enter para voltar ao menu anterior.");
                 scanner.nextLine();
-                return;
+                return new ManageAccountsMenu(user, accountUseCase);
             case 3:
                 System.out.println("Qual será o limite de crédito da conta?");
                 double creditLimit = scanner.nextDouble();
+                scanner.nextLine(); // Consome o newline pendente do nextDouble
                 try {
                     accountUseCase.createCreditAccount(user, 0.0, creditLimit);
                     System.out.println("Conta de crédito criada com sucesso!");
@@ -46,15 +47,16 @@ public class CreateAccountMenu extends BaseMenu {
                 }
                 System.out.println("Pressione Enter para voltar ao menu anterior.");
                 scanner.nextLine();
-                return;
+                return new ManageAccountsMenu(user, accountUseCase);
+            
+            case 0:
+                return new ManageAccountsMenu(user, accountUseCase);
 
             default:
                 System.out.println("Opção inválida.");
                 System.out.println("Pressione Enter para tentar novamente.");
                 scanner.nextLine();
-                clearScreen();
-                showMenu();
-                return;
+                return this;
         }
     }
     

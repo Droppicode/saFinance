@@ -33,12 +33,15 @@
 
         /**
          * Lê a opção escolhida pelo usuário no menu.
-         * @return O número da opção escolhida pelo usuário.
+         * @return O número da opção escolhida pelo usuário, ou -1 se a entrada for inválida (ex: letras).
          */
         protected int readOption() {
-            int option = scanner.nextInt();
-            scanner.nextLine(); // consome o \n pendente
-            return option;
+            try {
+                String input = scanner.nextLine().trim();
+                return Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                return -1; // Retorna um número que vai cair no bloco 'default' de qualquer switch
+            }
         }
 
         /**
@@ -58,8 +61,9 @@
         }
 
         /**
-         * Método abstrato que deve ser implementado pelas subclasses para exibir o menu específico.
+         * Método abstrato que deve ser implementado pelas subclasses para exibir o menu e retornar a próxima tela (Estado).
+         * @return O próximo BaseMenu a ser exibido, ou null para encerrar/voltar.
          */
-        public abstract void showMenu();
+        public abstract BaseMenu render();
     }
 

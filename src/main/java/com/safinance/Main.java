@@ -18,6 +18,7 @@ import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.Repository;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
+import com.safinance.view.BaseMenu;
 import com.safinance.view.LoginMenu;
 
 public class Main {
@@ -58,19 +59,16 @@ public class Main {
 
         // 4. Executando o Caso de Uso
         try {
+            BaseMenu currentState = new LoginMenu(authUseCase, userUseCase, accountUseCase);
             
-            new LoginMenu(authUseCase, userUseCase, accountUseCase).showMenu();
-
-            /**
-            User loggedIn = authUseCase.login("admin@safinance.com", "123456");
-            System.out.println("✅ Sucesso! Usuário logado: " + loggedIn.getName());
-            
-            // ---> INICIANDO O MENU DE TESTE <---
-            new com.safinance.view.TestMenu().start();
-             */
+            // Loop principal da aplicação (State Machine)
+            while (currentState != null) {
+                currentState = currentState.render();
+            }
             
         } catch (Exception e) {
-            System.out.println("❌ Falha no login: " + e.getMessage());
+            System.out.println("❌ Erro fatal: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

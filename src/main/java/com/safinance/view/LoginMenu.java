@@ -22,10 +22,10 @@ public class LoginMenu extends BaseMenu {
     }
 
     /**
-     * Exibe o menu de login.
+     * Exibe o menu de login e retorna o próximo estado.
      */
     @Override
-    public void showMenu() {
+    public BaseMenu render() {
         printHeader("Login");
         System.out.print("Email: ");
         String email = scanner.next();
@@ -36,7 +36,7 @@ public class LoginMenu extends BaseMenu {
 
             if (email.equals("teste")) { // Temporário para teste de funções
                 User loggedIn = authUseCase.login("admin@safinance.com", "123456");
-                new UserMenu(loggedIn, accountUseCase).showMenu();
+                return new UserMenu(loggedIn, accountUseCase);
             }
 
             if (email.isEmpty() || password.isEmpty()) {
@@ -47,17 +47,16 @@ public class LoginMenu extends BaseMenu {
                 System.out.println("Em desenvolvimento: Menu de Admin ainda não implementado.");
                 System.out.println("pressione Enter para tentar novamente.");
                 scanner.nextLine(); // Consume the newline character
-                clearScreen();
-                // new AdminMenu().showMenu();
+                return this;
+                // return new AdminMenu();
             } else {
-                new UserMenu(user, accountUseCase).showMenu();
+                return new UserMenu(user, accountUseCase);
             }
         } catch (IllegalArgumentException e) {
             System.out.println("Erro: " + e.getMessage());
             System.out.println("Pressione Enter para tentar novamente.");
             scanner.nextLine(); // Consume the newline character
-            clearScreen();
-            showMenu(); // Retry login
+            return this; // Retry login (same state)
         }
         
     }

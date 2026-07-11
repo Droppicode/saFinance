@@ -17,7 +17,7 @@ public class ManageAccountsMenu extends BaseMenu {
     }
 
     @Override
-    public void showMenu() {
+    public BaseMenu render() {
         printHeader("Gerenciar Contas");
         System.out.println("Contas do usuário: " + user.getName());
         System.out.println();
@@ -56,29 +56,24 @@ public class ManageAccountsMenu extends BaseMenu {
 
         switch (option) {
             case 1:
-                new CreateAccountMenu(user, accountUseCase).showMenu();
-                showMenu();
-                break;
+                return new CreateAccountMenu(user, accountUseCase);
             case 2:
                 System.out.println("Em desenvolvimento: Função de depósito/retirada/transferência ainda não implementada.");
                 System.out.println("Pressione Enter para tentar novamente.");
                 scanner.nextLine();
-                showMenu();
-                break;
+                return this;
             case 3:
                 System.out.println("Em desenvolvimento: Função de aplicar rendimento ainda não implementada.");
                 System.out.println("Pressione Enter para tentar novamente.");
                 scanner.nextLine();
-                showMenu();
-                break;
+                return this;
             case 0:
-                return;
+                return new UserMenu(user, accountUseCase);
             default:
                 System.out.println("Opção inválida.");
                 System.out.println("Pressione Enter para retornar.");
                 scanner.nextLine();
-                showMenu();
-                break;
+                return this;
         }
     }
     
