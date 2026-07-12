@@ -30,7 +30,7 @@ public class GlobalBalanceStatement extends FinancialStatementTemplate {
         double totalExpenses = 0.0;
 
         for (Transaction tx : transactions) {
-            if (tx instanceof IncomeTransaction) {
+            if (tx.isIncome()) {
                 totalIncomes += tx.getAmount();
             } else {
                 totalExpenses += tx.getAmount();

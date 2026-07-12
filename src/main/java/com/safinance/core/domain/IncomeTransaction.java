@@ -61,6 +61,11 @@ public final class IncomeTransaction implements Transaction {
         return accountId;
     }
 
+    @Override
+    public boolean isIncome() {
+        return true;
+    }
+
     private static void validateId(String id) {
         if (id == null || id.isBlank()) {
             throw new InvalidTransactionException(

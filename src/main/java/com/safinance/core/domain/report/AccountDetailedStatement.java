@@ -48,10 +48,10 @@ public class AccountDetailedStatement extends FinancialStatementTemplate {
         transactions.stream()
                 .sorted(Comparator.comparing(Transaction::getDate))
                 .forEach(tx -> {
-                    String type = (tx instanceof IncomeTransaction) ? "ENTRADA" : "SAÍDA";
+                    String type = tx.isIncome() ? "ENTRADA" : "SAÍDA";
                     String date = tx.getDate().format(DATE_FORMATTER);
                     // O valor é sempre positivo na interface, mas para exibição fica visual se é saída/entrada
-                    String amountPrefix = (tx instanceof IncomeTransaction) ? "+ " : "- ";
+                    String amountPrefix = tx.isIncome() ? "+ " : "- ";
                     
                     sb.append(String.format("%-18s | %-12s | %sR$ %-12.2f | %s\n",
                             date, type, amountPrefix, tx.getAmount(), tx.getDescription()));

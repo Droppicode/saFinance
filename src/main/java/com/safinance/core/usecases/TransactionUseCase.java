@@ -178,7 +178,7 @@ public class TransactionUseCase {
     public List<Transaction> getTransactionsForAccount(String accountId) {
         validateAccountId(accountId, "Account");
         return transactionRepository.findAll().stream()
-                .filter(t -> t.getAccountId().equals(accountId))
+                .filter(t -> t.belongsToAccount(accountId))
                 .toList();
     }
 
