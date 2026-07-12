@@ -50,12 +50,14 @@ public class AccountUseCase {
      * @param creditLimit O limite de crédito da conta.
      * @return A conta de crédito criada.
      */
-    public CreditAccount createCreditAccount(User user, double initialBalance, double creditLimit) {
+    public CreditAccount createCreditAccount(User user, double initialBalance, double creditLimit, String name) {
+        checkDuplicateName(user, name);
         CreditAccount acc = new CreditAccount(
             UUID.randomUUID().toString(),
             user.getId(),
             initialBalance,
-            creditLimit
+            creditLimit,
+            name
         );
         accountRepository.save(acc);
         return acc;
@@ -67,11 +69,13 @@ public class AccountUseCase {
      * @param initialBalance O saldo inicial da conta.
      * @return A conta poupança criada.
      */
-    public SavingsAccount createSavingsAccount(User user, double initialBalance) {
+    public SavingsAccount createSavingsAccount(User user, double initialBalance, String name) {
+        checkDuplicateName(user, name);
         SavingsAccount acc = new SavingsAccount(
             UUID.randomUUID().toString(),
             user.getId(),
-            initialBalance
+            initialBalance,
+            name
         );
         accountRepository.save(acc);
         return acc;
@@ -84,12 +88,14 @@ public class AccountUseCase {
      * @param portfolio O portfólio de ativos da conta.
      * @return A conta carteira criada.
      */
-    public WalletAccount createWalletAccount(User user, double initialBalance, Map<String, AssetPosition> portfolio) {
+    public WalletAccount createWalletAccount(User user, double initialBalance, Map<String, AssetPosition> portfolio, String name) {
+        checkDuplicateName(user, name);
         WalletAccount acc = new WalletAccount(
             UUID.randomUUID().toString(),
             user.getId(),
             initialBalance,
-            portfolio
+            portfolio,
+            name
         );
         accountRepository.save(acc);
         return acc;
@@ -104,6 +110,20 @@ public class AccountUseCase {
         return accountRepository.findAll().stream()
             .filter(account -> account.isOwnedBy(user.getId()))
             .toList();
+    }
+
+    /**
+     * Verifica se o usuário já possui uma conta com o mesmo nome.
+     */
+    private void checkDuplicateName(User user, String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("O nome da conta não pode ser vazio.");
+        }
+        boolean exists = listUserAccounts(user).stream()
+            .anyMatch(acc -> acc.getName().equalsIgnoreCase(name));
+        if (exists) {
+            throw new IllegalArgumentException("Você já possui uma conta com o nome '" + name + "'. Escolha outro nome.");
+        }
     }
 
     /**

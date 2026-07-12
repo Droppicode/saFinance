@@ -68,10 +68,10 @@ public class TransferAction implements BaseMenu {
 
         printAccounts(promptService, accounts);
 
-        List<String> validIds = accounts.stream().map(Account::getId).toList();
-        String sourceAccountId = promptService.readWithOptions("Digite o ID da conta de origem (pressione TAB): ", validIds).trim();
+        List<String> accountNames = accounts.stream().map(Account::getName).toList();
+        String sourceAccountName = promptService.readWithOptions("Digite o nome da conta de origem (pressione TAB): ", accountNames).trim();
 
-        Account sourceAccount = findUserAccount(accounts, sourceAccountId);
+        Account sourceAccount = findUserAccount(accounts, sourceAccountName);
 
         if (sourceAccount == null) {
             promptService.printError("Conta de origem não encontrada ou não pertence ao usuário.");
@@ -80,9 +80,9 @@ public class TransferAction implements BaseMenu {
             return backToManageAccounts();
         }
 
-        String destinationAccountId = promptService.readWithOptions("Digite o ID da conta de destino (pressione TAB): ", validIds).trim();
+        String destinationAccountName = promptService.readWithOptions("Digite o nome da conta de destino (pressione TAB): ", accountNames).trim();
 
-        Account destinationAccount = findUserAccount(accounts, destinationAccountId);
+        Account destinationAccount = findUserAccount(accounts, destinationAccountName);
 
         if (destinationAccount == null) {
             promptService.printError("Conta de destino não encontrada ou não pertence ao usuário.");
@@ -91,7 +91,7 @@ public class TransferAction implements BaseMenu {
             return backToManageAccounts();
         }
 
-        if (sourceAccountId.equals(destinationAccountId)) {
+        if (sourceAccount.getId().equals(destinationAccount.getId())) {
             promptService.printError("As contas de origem e destino devem ser diferentes.");
 
             waitForReturn(promptService);
@@ -137,11 +137,11 @@ public class TransferAction implements BaseMenu {
         double tax = transactionUseCase.previewTransferTax(amount, transferType);
 
         try {
-            transactionUseCase.transfer(sourceAccountId, destinationAccountId, amount, transferType);
+            transactionUseCase.transfer(sourceAccount.getId(), destinationAccount.getId(), amount, transferType);
 
-            Account updatedSource = accountUseCase.getAccount(sourceAccountId);
+            Account updatedSource = accountUseCase.getAccount(sourceAccount.getId());
 
-            Account updatedDestination = accountUseCase.getAccount(destinationAccountId);
+            Account updatedDestination = accountUseCase.getAccount(destinationAccount.getId());
 
             promptService.printSuccess("Transferência realizada com sucesso.");
 
@@ -168,16 +168,15 @@ public class TransferAction implements BaseMenu {
         promptService.printInfo("Contas disponíveis:");
 
         for (Account account : accounts) {
-            String shortId = account.getId().length() > 5 ? account.getId().substring(0, 5) : account.getId();
-            promptService.printInfo(String.format("%s (ID: %s) | Saldo: R$ %.2f", account.getAccountType(), shortId, account.getBalance()));
+            promptService.printInfo(String.format("%s (%s) | Saldo: R$ %.2f", account.getName(), account.getAccountType(), account.getBalance()));
         }
 
         promptService.printInfo("");
     }
 
-    private Account findUserAccount(List<Account> accounts, String accountId) {
+    private Account findUserAccount(List<Account> accounts, String accountName) {
         return accounts.stream()
-                .filter(account -> account.getId().equals(accountId))
+                .filter(account -> account.getName().equalsIgnoreCase(accountName))
                 .findFirst()
                 .orElse(null);
     }

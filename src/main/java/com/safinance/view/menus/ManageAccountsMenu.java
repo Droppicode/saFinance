@@ -45,8 +45,8 @@ public class ManageAccountsMenu implements BaseMenu {
         if (accounts.isEmpty()) {
             promptService.printWarning("Nenhuma conta encontrada para este usuário.");
         } else {
-            promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Tipo", "Saldo", "Limite"));
-            promptService.printInfo("---------------------------------------------");
+            promptService.printInfo(String.format("%-15s | %-12s | %-10s | %-10s", "Nome", "Tipo", "Saldo", "Limite"));
+            promptService.printInfo("---------------------------------------------------------");
             for (var account : accounts) {
                 promptService.printInfo(account.getDisplaySummary());
             }

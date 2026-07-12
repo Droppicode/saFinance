@@ -41,10 +41,12 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import java.util.List;
+import java.util.Locale;
 import java.time.LocalDateTime;
 
 public class Main {
     public static void main(String[] args) {
+        Locale.setDefault(new Locale("pt", "BR"));
         System.out.println("Iniciando ObjectFinance...\n");
 
         // 1. Inicializa dependências globais de utilidade (Gson com ensinamento para Interfaces)

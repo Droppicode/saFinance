@@ -54,10 +54,10 @@ public class WithdrawAction implements BaseMenu {
 
         printAccounts(promptService, accounts);
 
-        List<String> validIds = accounts.stream().map(Account::getId).toList();
-        String accountId = promptService.readWithOptions("Digite o ID da conta de origem (pressione TAB): ", validIds).trim();
+        List<String> accountNames = accounts.stream().map(Account::getName).toList();
+        String accountName = promptService.readWithOptions("Digite o nome da conta de origem (pressione TAB): ", accountNames).trim();
 
-        Account selectedAccount = findUserAccount(accounts, accountId);
+        Account selectedAccount = findUserAccount(accounts, accountName);
 
         if (selectedAccount == null) {
             promptService.printError("Conta não encontrada ou não pertence ao usuário.");
@@ -114,16 +114,15 @@ public class WithdrawAction implements BaseMenu {
         promptService.printInfo("Contas disponíveis:");
 
         for (Account account : accounts) {
-            String shortId = account.getId().length() > 5 ? account.getId().substring(0, 5) : account.getId();
-            promptService.printInfo(String.format("%s (ID: %s) | Saldo: R$ %.2f", account.getAccountType(), shortId, account.getBalance()));
+            promptService.printInfo(String.format("%s (%s) | Saldo: R$ %.2f", account.getName(), account.getAccountType(), account.getBalance()));
         }
 
         promptService.printInfo("");
     }
 
-    private Account findUserAccount(List<Account> accounts, String accountId) {
+    private Account findUserAccount(List<Account> accounts, String accountName) {
         return accounts.stream()
-                .filter(account -> account.getId().equals(accountId))
+                .filter(account -> account.getName().equalsIgnoreCase(accountName))
                 .findFirst()
                 .orElse(null);
     }

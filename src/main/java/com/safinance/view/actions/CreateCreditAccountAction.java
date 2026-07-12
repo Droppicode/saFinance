@@ -34,6 +34,8 @@ public class CreateCreditAccountAction implements BaseMenu {
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
+        String name = promptService.readString("Nome da Conta de Crédito: ").trim();
+        
         double creditLimit = -1;
         String input = promptService.readString("Qual será o limite de crédito da conta? ");
         
@@ -49,7 +51,7 @@ public class CreateCreditAccountAction implements BaseMenu {
         }
         
         try {
-            accountUseCase.createCreditAccount(user, 0.0, creditLimit);
+            accountUseCase.createCreditAccount(user, 0.0, creditLimit, name);
             promptService.printSuccess("Conta de crédito criada com sucesso no valor de R$ " + creditLimit);
         } catch (Exception e) {
             promptService.printError("Erro ao criar conta de crédito: " + e.getMessage());

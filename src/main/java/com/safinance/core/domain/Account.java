@@ -10,6 +10,7 @@ package com.safinance.core.domain;
  */
 public interface Account extends Entity {
     String getOwnerId();
+    String getName();
     
     /** Verifica se a conta pertence a um determinado usuário (evita train wrecks). */
     default boolean isOwnedBy(String ownerId) {

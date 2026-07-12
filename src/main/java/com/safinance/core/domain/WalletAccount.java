@@ -14,17 +14,19 @@ import com.safinance.core.exception.InsufficientFundsException;
  */
 public class WalletAccount implements Account {
     private final String id;
+    private final String name;
     private final String ownerId;
     private final double balance;
     private final Map<String, AssetPosition> portfolio;
 
-    public WalletAccount(String id, String ownerId, double balance, Map<String, AssetPosition> portfolio) {
+    public WalletAccount(String id, String ownerId, double balance, Map<String, AssetPosition> portfolio, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
         if (balance < 0) throw new IllegalArgumentException("O saldo inicial da Wallet não pode ser negativo.");
         
         this.id = id;
+        this.name = name;
         this.ownerId = ownerId;
         this.balance = balance;
         // Garantindo que a lista (Map) de portfólio seja blindada e imutável
@@ -38,11 +40,14 @@ public class WalletAccount implements Account {
     public String getOwnerId() { return ownerId; }
 
     @Override
+    public String getName() { return name; }
+
+    @Override
     public String getAccountType() { return "Carteira"; }
 
     @Override
     public String getDisplaySummary() {
-        return String.format("%-12s | %-10.2f | %-10s", getAccountType(), getBalance(), "-");
+        return String.format("%-15s | %-12s | %-10.2f | %-10s", getName(), getAccountType(), getBalance(), "-");
     }
 
     @Override
@@ -64,7 +69,7 @@ public class WalletAccount implements Account {
             throw new InsufficientFundsException("Insufficient balance in WalletAccount.");
         }
         
-        return new WalletAccount(this.id, this.ownerId, newBalance, this.portfolio);
+        return new WalletAccount(this.id, this.ownerId, newBalance, this.portfolio, this.name);
     }
 
     private void validateTransaction(Transaction t) {
@@ -81,6 +86,6 @@ public class WalletAccount implements Account {
      * Wither para atualizar a carteira de investimentos.
      */
     public WalletAccount withPortfolio(Map<String, AssetPosition> newPortfolio) {
-        return new WalletAccount(this.id, this.ownerId, this.balance, newPortfolio);
+        return new WalletAccount(this.id, this.ownerId, this.balance, newPortfolio, this.name);
     }
 }

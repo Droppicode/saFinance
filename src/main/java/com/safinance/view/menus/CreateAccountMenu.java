@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import com.safinance.view.actions.CreateWalletAccountAction;
+import com.safinance.view.actions.CreateSavingsAccountAction;
 
 public class CreateAccountMenu implements BaseMenu {
 
@@ -27,16 +29,8 @@ public class CreateAccountMenu implements BaseMenu {
         this.accountUseCase = accountUseCase;
         this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> {
-            accountUseCase.createWalletAccount(user, 0.0, null); 
-            return new ManageAccountsMenu(user, accountUseCase, transactionUseCase);
-        }, transitions);
-
-        registerTransition("2", () -> {
-            accountUseCase.createSavingsAccount(user, 0.0);
-            return new ManageAccountsMenu(user, accountUseCase, transactionUseCase);
-        }, transitions);
-
+        registerTransition("1", () -> new CreateWalletAccountAction(user, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new CreateSavingsAccountAction(user, accountUseCase, transactionUseCase), transitions);
         registerTransition("3", () -> new CreateCreditAccountAction(user, accountUseCase, transactionUseCase), transitions); 
         registerTransition("0", () -> new ManageAccountsMenu(user, accountUseCase, transactionUseCase), transitions);
     }
@@ -58,13 +52,6 @@ public class CreateAccountMenu implements BaseMenu {
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
-            if (option.equals("1")) {
-                promptService.printSuccess("Conta corrente criada com sucesso!");
-                promptService.readString("Pressione Enter para voltar ao menu anterior.");
-            } else if (option.equals("2")) {
-                promptService.printSuccess("Conta poupança criada com sucesso!");
-                promptService.readString("Pressione Enter para voltar ao menu anterior.");
-            }
             return transition.get();
         } else {
             promptService.printError("Opção inválida.");
