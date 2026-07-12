@@ -1,25 +1,33 @@
 package com.safinance.view.actions;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
+import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.ManageAccountsMenu;
 import com.safinance.core.usecases.TransactionUseCase;
 
-import java.util.Collections;
-import java.util.List;
-
 public class CreateCreditAccountAction implements BaseMenu {
 
     private final User user;
+    private final User accountOwner;
+    private final UserUseCase userUseCase;
+    private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
     private final InvestmentUseCase investmentUseCase;
     private final TransactionUseCase transactionUseCase;
 
-    public CreateCreditAccountAction(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
+    public CreateCreditAccountAction(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
+        this.accountOwner = accountOwner;
+        this.userUseCase = userUseCase;
+        this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
         this.investmentUseCase = investmentUseCase;
         this.transactionUseCase = transactionUseCase;
@@ -50,18 +58,17 @@ public class CreateCreditAccountAction implements BaseMenu {
         } catch (NumberFormatException e) {
             promptService.printError("Valor de limite inválido.");
             promptService.readString("Pressione Enter para voltar ao menu de contas.");
-            return new ManageAccountsMenu(user, accountUseCase, investmentUseCase, transactionUseCase);
-
+            return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
         }
         
         try {
-            accountUseCase.createCreditAccount(user, 0.0, creditLimit, name);
+            accountUseCase.createCreditAccount(accountOwner, 0.0, creditLimit, name);
             promptService.printSuccess("Conta de crédito criada com sucesso no valor de R$ " + creditLimit);
         } catch (Exception e) {
             promptService.printError("Erro ao criar conta de crédito: " + e.getMessage());
         }
         
         promptService.readString("Pressione Enter para voltar ao menu anterior.");
-        return new ManageAccountsMenu(user, accountUseCase, investmentUseCase, transactionUseCase);
+        return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
     }
 }

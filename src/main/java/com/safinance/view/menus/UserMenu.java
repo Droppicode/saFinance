@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import com.safinance.core.domain.User;
+import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+
 /**
  * Menu principal para usuários não administradores.
  */
@@ -38,9 +43,9 @@ public class UserMenu implements BaseMenu {
         this.investmentUseCase = investmentUseCase;
         this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new ManageAccountsMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
-        registerTransition("2", () -> new ReportMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase, this), transitions);
-        registerTransition("3", () -> new InvestmentMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(user, user, null, null, accountUseCase, investmentUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new ReportMenu(user, accountUseCase, investmentUseCase, transactionUseCase, this), transitions);
+        registerTransition("3", () -> new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 
