@@ -48,6 +48,9 @@ public class BuyAssetTransaction implements Transaction {
     @Override
     public boolean isIncome() { return false; }
 
+    @Override
+    public boolean isTransfer() { return false; }
+
     public Asset getAsset() { return asset; }
     public double getQuantity() { return quantity; }
     public double getPricePerUnit() { return pricePerUnit; }

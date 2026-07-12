@@ -94,13 +94,4 @@ public class SavingsAccount implements Account {
         return new SavingsAccount(this.id, this.ownerId, newBalance, this.name);
     }
 
-    private void validateTransaction(Transaction transaction) {
-        if (transaction == null) {
-            throw new InvalidTransactionException("Transaction cannot be null.");
-        }
-
-        if (!this.id.equals(transaction.getAccountId())) {
-            throw new InvalidTransactionException("Transaction does not belong to this account.");
-        }
-    }
 }

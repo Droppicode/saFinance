@@ -68,17 +68,4 @@ public class CreditAccount implements Account {
         return new CreditAccount(this.id, this.ownerId, newBalance, this.creditLimit, this.name);
     }
 
-    private void validateTransaction(Transaction transaction) {
-        if (transaction == null) {
-            throw new InvalidTransactionException(
-                    "Transaction cannot be null."
-            );
-        }
-
-        if (!this.id.equals(transaction.getAccountId())) {
-            throw new InvalidTransactionException(
-                    "Transaction does not belong to this account."
-            );
-        }
-    }
 }

@@ -13,12 +13,22 @@ public final class TransactionFactory {
             String description,
             String accountId
     ) {
+        return createIncome(amount, description, accountId, false);
+    }
+
+    public IncomeTransaction createIncome(
+            double amount,
+            String description,
+            String accountId,
+            boolean isTransfer
+    ) {
         return new IncomeTransaction(
                 UUID.randomUUID().toString(),
                 amount,
                 LocalDateTime.now(),
                 description,
-                accountId
+                accountId,
+                isTransfer
         );
     }
 
@@ -27,12 +37,22 @@ public final class TransactionFactory {
             String description,
             String accountId
     ) {
+        return createExpense(amount, description, accountId, false);
+    }
+
+    public ExpenseTransaction createExpense(
+            double amount,
+            String description,
+            String accountId,
+            boolean isTransfer
+    ) {
         return new ExpenseTransaction(
                 UUID.randomUUID().toString(),
                 amount,
                 LocalDateTime.now(),
                 description,
-                accountId
+                accountId,
+                isTransfer
         );
     }
 

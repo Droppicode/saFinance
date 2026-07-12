@@ -48,6 +48,9 @@ public class SellAssetTransaction implements Transaction {
     @Override
     public boolean isIncome() { return true; }
 
+    @Override
+    public boolean isTransfer() { return false; }
+
     public String getTicker() { return ticker; }
     public double getQuantity() { return quantity; }
     public double getPricePerUnit() { return pricePerUnit; }

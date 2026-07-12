@@ -158,9 +158,9 @@ public class TransactionUseCase {
                         + " from account " + sourceAccountId
                         + " to account " + destinationAccountId;
 
-        Transaction expenseTransaction = transactionFactory.createExpense(totalDebit, description, sourceAccountId);
+        Transaction expenseTransaction = transactionFactory.createExpense(totalDebit, description, sourceAccountId, true);
 
-        Transaction incomeTransaction = transactionFactory.createIncome(amount, description, destinationAccountId);
+        Transaction incomeTransaction = transactionFactory.createIncome(amount, description, destinationAccountId, true);
 
         Account updatedSourceAccount = sourceAccount.process(expenseTransaction);
 

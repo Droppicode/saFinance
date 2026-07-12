@@ -112,15 +112,7 @@ public class WalletAccount implements Account {
         return new WalletAccount(this.id, this.ownerId, newBalance, newPortfolio, this.name);
     }
 
-    private void validateTransaction(Transaction t) {
-        if (t == null) {
-            throw new InvalidTransactionException("Transaction cannot be null.");
-        }
 
-        if (!this.id.equals(t.getAccountId())) {
-            throw new InvalidTransactionException("Transaction does not belong to this account.");
-        }
-    }
 
     /**
      * Wither para atualizar a carteira de investimentos.
