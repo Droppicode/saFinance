@@ -14,7 +14,7 @@ import java.util.Random;
  * rates). A single instance is created in {@code Main} and injected into whoever
  * needs it, instead of a static Singleton, to avoid global mutable state.</p>
  */
-public class Bank {
+public class Bank implements Entity {
 
     /** Monthly savings yield rates, indexed by month. Grows on demand. */
     private final Map<YearMonth, Double> yieldRates = new HashMap<>();
@@ -30,7 +30,7 @@ public class Bank {
     private YearMonth lastKnownMonth;
 
     /** Randomness source used to generate rates for missing months. */
-    private final Random random = new Random();
+    private transient Random random;
 
     /** Lower/upper bounds for a generated monthly yield (business rule, ~0.4%–0.6%). */
     private static final double MIN_RATE = 0.004;
@@ -62,6 +62,25 @@ public class Bank {
         // not registered here fall through to a tax-exempt strategy in operationCost().
         this.operationStrategies.put("TED", new StandardTax(DEFAULT_TRANSFER_RATE));
         this.operationStrategies.put("PIX", new ExemptTax());
+    }
+
+    /**
+     * Private no-args constructor for JSON deserialization safety.
+     */
+    private Bank() {
+        this.inceptionMonth = YearMonth.now(); // Will be overwritten by GSON
+    }
+
+    @Override
+    public String getId() {
+        return "BANK_SINGLETON";
+    }
+
+    private Random getRandom() {
+        if (random == null) {
+            random = new Random();
+        }
+        return random;
     }
 
     /**
@@ -181,6 +200,6 @@ public class Bank {
 
     /** Draws a random monthly yield within the configured business bounds. */
     private double randomRate() {
-        return MIN_RATE + (MAX_RATE - MIN_RATE) * random.nextDouble();
+        return MIN_RATE + (MAX_RATE - MIN_RATE) * getRandom().nextDouble();
     }
 }

@@ -46,7 +46,7 @@ public class UpdateYieldRateAction implements BaseMenu {
                 return onComplete.get();
             }
 
-            bankUseCase.updateYieldRate(month, newRate);
+            bankUseCase.updateYieldRate(month, newRate / 100.0);
             promptService.printSuccess("Taxa de rendimento atualizada com sucesso!");
         } catch (Exception e) {
             promptService.printError("Erro ao atualizar taxa de rendimento: " + e.getMessage());

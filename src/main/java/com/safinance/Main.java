@@ -32,6 +32,9 @@ import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.SellAssetTransaction;
 import com.safinance.core.domain.SimulatedAssetMarket;
 import com.safinance.core.domain.Stock;
+import com.safinance.core.domain.TaxStrategy;
+import com.safinance.core.domain.StandardTax;
+import com.safinance.core.domain.ExemptTax;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.User;
@@ -44,6 +47,7 @@ import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.LocalDateTimeAdapter;
+import com.safinance.infra.persistence.YearMonthAdapter;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.infra.persistence.Repository;
 import com.safinance.view.BaseMenu;
@@ -76,12 +80,19 @@ public class Main {
             .registerSubtype(BuyAssetTransaction.class)
             .registerSubtype(SellAssetTransaction.class);
 
+        PolymorphicTypeAdapterFactory<TaxStrategy> taxStrategyAdapterFactory = PolymorphicTypeAdapterFactory.of(TaxStrategy.class)
+            .registerSubtype(StandardTax.class)
+            .registerSubtype(ExemptTax.class);
+
         Gson gson = new GsonBuilder()
+            .enableComplexMapKeySerialization()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .registerTypeAdapter(YearMonth.class, new YearMonthAdapter())
             .registerTypeAdapterFactory(userAdapterFactory)
             .registerTypeAdapterFactory(accountAdapterFactory)
             .registerTypeAdapterFactory(assetAdapterFactory)
             .registerTypeAdapterFactory(transactionAdapterFactory)
+            .registerTypeAdapterFactory(taxStrategyAdapterFactory)
             .create();
 
         // 2. Cria a Infraestrutura (Onde instanciamos a implementação CONCRETA)
@@ -90,7 +101,13 @@ public class Main {
         Repository<User, String> userRepository = new JsonlRepository<>("data/users.jsonl", User.class, gson);
         Repository<Account, String> accountRepository = new JsonlRepository<>("data/accounts.jsonl", Account.class, gson);
         Repository<Transaction, String> transactionRepository = new JsonlRepository<>("data/transactions.jsonl", Transaction.class, gson);
-        Bank bank = new Bank(YearMonth.now(), 0.005);
+        Repository<Bank, String> bankRepository = new JsonlRepository<>("data/bank.jsonl", Bank.class, gson);
+        
+        Bank bank = bankRepository.findById("BANK_SINGLETON");
+        if (bank == null) {
+            bank = new Bank(YearMonth.now(), 0.005);
+            bankRepository.save(bank);
+        }
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
         if (userRepository.findById("admin@safinance.com") == null) {
@@ -101,7 +118,7 @@ public class Main {
         // O núcleo de negócios (UseCase) é instanciado recebendo a infraestrutura pelo construtor.
         AuthUseCase authUseCase = new AuthUseCase(userRepository);
         UserUseCase userUseCase = new UserUseCase(userRepository);
-        BankUseCase bankUseCase = new BankUseCase(bank);
+        BankUseCase bankUseCase = new BankUseCase(bank, bankRepository);
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
 
         TransactionFactory transactionFactory = new TransactionFactory();

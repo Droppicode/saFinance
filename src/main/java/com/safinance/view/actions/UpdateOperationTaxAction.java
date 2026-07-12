@@ -43,7 +43,7 @@ public class UpdateOperationTaxAction implements BaseMenu {
                 return onComplete.get();
             }
 
-            bankUseCase.updateOperationTax(operationType, newRate);
+            bankUseCase.updateOperationTax(operationType, newRate / 100.0);
             promptService.printSuccess("Taxa de operação atualizada com sucesso!");
         } catch (Exception e) {
             promptService.printError("Erro ao atualizar taxa de operação: " + e.getMessage());

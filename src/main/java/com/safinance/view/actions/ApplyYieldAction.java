@@ -30,16 +30,10 @@ public class ApplyYieldAction implements BaseMenu {
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Simulação de Rendimento da Poupança");
         
-        YearMonth current = ctx.bankUseCase().getCurrentSimulationMonth();
-        YearMonth inception = ctx.bankUseCase().getInceptionMonth();
-        
-        long monthsPassed = ChronoUnit.MONTHS.between(inception, current);
-        long years = monthsPassed / 12;
-        long months = monthsPassed % 12;
+        YearMonth current = YearMonth.now();
         
         promptService.printInfo("O nosso banco simula a passagem do tempo na economia real.");
-        promptService.printInfo("Data atual da simulação: " + current);
-        promptService.printInfo("Tempo simulado decorrido: " + years + " anos e " + months + " meses.\n");
+        promptService.printInfo("Data atual: " + current + "\n");
     }
 
     @Override
@@ -56,7 +50,7 @@ public class ApplyYieldAction implements BaseMenu {
             }
             
             YearMonth targetMonth = YearMonth.parse(input.trim());
-            YearMonth currentMonth = ctx.bankUseCase().getCurrentSimulationMonth();
+            YearMonth currentMonth = YearMonth.now();
             
             if (targetMonth.isBefore(currentMonth) || targetMonth.equals(currentMonth)) {
                 promptService.printError("O mês alvo deve ser no futuro em relação ao mês atual (" + currentMonth + ").");
@@ -67,6 +61,11 @@ public class ApplyYieldAction implements BaseMenu {
             double simulatedBalance = sa.getBalance();
             YearMonth cursor = currentMonth.plusMonths(1);
             
+            // OTIMIZAÇÃO: Solicita a taxa do mês final ANTES do loop. 
+            // Isso faz com que a classe Bank gere todos os meses intermediários de uma vez 
+            // na memória e salve no JSON apenas 1 vez (evitando centenas de linhas no arquivo).
+            ctx.bankUseCase().getYieldRate(targetMonth);
+            
             // Loop para aplicar os juros compostos mês a mês
             while (!cursor.isAfter(targetMonth)) {
                 double rate = ctx.bankUseCase().getYieldRate(cursor);
@@ -76,8 +75,12 @@ public class ApplyYieldAction implements BaseMenu {
             
             double totalYield = simulatedBalance - sa.getBalance();
             
+            long totalMonthsPassed = ChronoUnit.MONTHS.between(currentMonth, targetMonth);
+            long simYears = totalMonthsPassed / 12;
+            long simMonths = totalMonthsPassed % 12;
+            
             promptService.printSuccess("--- Resultado da Simulação (Juros Compostos) ---");
-            promptService.printInfo(String.format("Período simulado: de %s até %s", currentMonth, targetMonth));
+            promptService.printInfo(String.format("Período projetado: %d anos e %d meses (de %s até %s)", simYears, simMonths, currentMonth, targetMonth));
             promptService.printInfo(String.format("Rendimento acumulado total: R$ %.2f", totalYield));
             promptService.printInfo(String.format("Saldo total projetado no final: R$ %.2f\n", simulatedBalance));
             
