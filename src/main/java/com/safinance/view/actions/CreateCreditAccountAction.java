@@ -2,6 +2,7 @@ package com.safinance.view.actions;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.ManageAccountsMenu;
@@ -13,10 +14,12 @@ public class CreateCreditAccountAction implements BaseMenu {
 
     private final User user;
     private final AccountUseCase accountUseCase;
+    private final InvestmentUseCase investmentUseCase;
 
-    public CreateCreditAccountAction(User user, AccountUseCase accountUseCase) {
+    public CreateCreditAccountAction(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+        this.investmentUseCase = investmentUseCase;
     }
 
     @Override
@@ -42,7 +45,7 @@ public class CreateCreditAccountAction implements BaseMenu {
         } catch (NumberFormatException e) {
             promptService.printError("Valor de limite inválido.");
             promptService.readString("Pressione Enter para voltar ao menu de contas.");
-            return new ManageAccountsMenu(user, accountUseCase);
+            return new ManageAccountsMenu(user, accountUseCase, investmentUseCase);
         }
         
         try {
@@ -53,6 +56,6 @@ public class CreateCreditAccountAction implements BaseMenu {
         }
         
         promptService.readString("Pressione Enter para voltar ao menu anterior.");
-        return new ManageAccountsMenu(user, accountUseCase);
+        return new ManageAccountsMenu(user, accountUseCase, investmentUseCase);
     }
 }

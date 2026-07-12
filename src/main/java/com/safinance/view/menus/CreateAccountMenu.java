@@ -6,6 +6,7 @@ import com.safinance.view.actions.CreateCreditAccountAction;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,25 +17,27 @@ public class CreateAccountMenu implements BaseMenu {
 
     private final User user;
     private final AccountUseCase accountUseCase;
+    private final InvestmentUseCase investmentUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public CreateAccountMenu(User user, AccountUseCase accountUseCase) {
+    public CreateAccountMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+        this.investmentUseCase = investmentUseCase;
 
         registerTransition("1", () -> {
             accountUseCase.createWalletAccount(user, 0.0, null); 
-            return new ManageAccountsMenu(user, accountUseCase);
+            return new ManageAccountsMenu(user, accountUseCase, investmentUseCase);
         }, transitions);
 
         registerTransition("2", () -> {
             accountUseCase.createSavingsAccount(user, 0.0);
-            return new ManageAccountsMenu(user, accountUseCase);
+            return new ManageAccountsMenu(user, accountUseCase, investmentUseCase);
         }, transitions);
 
-        registerTransition("3", () -> new CreateCreditAccountAction(user, accountUseCase), transitions); 
-        registerTransition("0", () -> new ManageAccountsMenu(user, accountUseCase), transitions);
+        registerTransition("3", () -> new CreateCreditAccountAction(user, accountUseCase, investmentUseCase), transitions); 
+        registerTransition("0", () -> new ManageAccountsMenu(user, accountUseCase, investmentUseCase), transitions);
     }
 
     @Override

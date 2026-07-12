@@ -8,6 +8,7 @@ import com.safinance.core.domain.CreditAccount;
 import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,17 +20,19 @@ public class ManageAccountsMenu implements BaseMenu {
 
     private final User user;
     private final AccountUseCase accountUseCase;
+    private final InvestmentUseCase investmentUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public ManageAccountsMenu(User user, AccountUseCase accountUseCase) {
+    public ManageAccountsMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+        this.investmentUseCase = investmentUseCase;
 
-        registerTransition("1", () -> new CreateAccountMenu(user, accountUseCase), transitions);
+        registerTransition("1", () -> new CreateAccountMenu(user, accountUseCase, investmentUseCase), transitions);
         registerTransition("2", () -> this, transitions);
         registerTransition("3", () -> this, transitions);
-        registerTransition("0", () -> new UserMenu(user, accountUseCase), transitions);
+        registerTransition("0", () -> new UserMenu(user, accountUseCase, investmentUseCase), transitions);
     }
 
     @Override
@@ -58,10 +61,18 @@ public class ManageAccountsMenu implements BaseMenu {
         }
 
         promptService.printInfo("");
+        var wallet = investmentUseCase.getWalletAccount(user);
+        if (wallet != null) {
+            promptService.printInfo(String.format("Conta carteira existente: saldo R$ %.2f | %d posições", wallet.getBalance(), wallet.getPortfolio().size()));
+        } else {
+            promptService.printInfo("Nenhuma conta carteira encontrada. Você pode criar uma no menu de contas.");
+        }
+
+        promptService.printInfo("");
         promptService.printMenuOptions(
-        "Criar nova conta",
-                    "Depositar / Retirar / Transferir",
-                    "Aplicar rendimento (para contas poupança)"
+            "Criar nova conta",
+            "Depositar / Retirar / Transferir",
+            "Aplicar rendimento (para contas poupança)"
         );
     }
 

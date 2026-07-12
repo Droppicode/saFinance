@@ -2,27 +2,30 @@ package com.safinance;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.safinance.core.domain.Account;
-import com.safinance.core.domain.CreditAccount;
-import com.safinance.core.domain.SavingsAccount;
-import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.AdminUser;
+import com.safinance.core.domain.Asset;
+import com.safinance.core.domain.CreditAccount;
+import com.safinance.core.domain.FixedIncome;
+import com.safinance.core.domain.RealEstateFund;
 import com.safinance.core.domain.RegularUser;
+import com.safinance.core.domain.SavingsAccount;
+import com.safinance.core.domain.Stock;
 import com.safinance.core.domain.User;
+import com.safinance.core.domain.WalletAccount;
+import com.safinance.core.domain.Bank;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.infra.persistence.LocalDateTimeAdapter;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
+import com.safinance.infra.persistence.Repository;
 import com.safinance.view.BaseMenu;
-import com.safinance.view.menus.WelcomeMenu;
 import com.safinance.view.PromptService;
-import com.safinance.core.domain.Bank;
+import com.safinance.view.menus.WelcomeMenu;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 
 import org.jline.reader.Candidate;
@@ -50,9 +53,16 @@ public class Main {
             .registerSubtype(RegularUser.class)
             .registerSubtype(AdminUser.class);
 
+        PolymorphicTypeAdapterFactory<Asset> assetAdapterFactory = PolymorphicTypeAdapterFactory.of(Asset.class)
+            .registerSubtype(Stock.class)
+            .registerSubtype(RealEstateFund.class)
+            .registerSubtype(FixedIncome.class);
+
         Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .registerTypeAdapterFactory(userAdapterFactory)
             .registerTypeAdapterFactory(accountAdapterFactory)
+            .registerTypeAdapterFactory(assetAdapterFactory)
             .create();
 
         // 2. Cria a Infraestrutura (Onde instanciamos a implementação CONCRETA)
@@ -72,6 +82,7 @@ public class Main {
         AuthUseCase authUseCase = new AuthUseCase(userRepository);
         UserUseCase userUseCase = new UserUseCase(userRepository);
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
+        InvestmentUseCase investmentUseCase = new InvestmentUseCase(accountRepository);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
         try {
@@ -101,7 +112,7 @@ public class Main {
                 dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
             } catch (Exception ignore) {}
             
-            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase);
+            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase, investmentUseCase);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {
