@@ -83,6 +83,7 @@ public class InvestmentMenu implements BaseMenu {
         }
 
         WalletAccount wallet = investmentUseCase.getWalletAccount(user);
+        //TODO: fazer um menu/form intermediario pra selecionar walletAccount (caso o usuario tenha mais de uma wallet account)
 
         switch (option) {
             case "1":
@@ -152,7 +153,7 @@ public class InvestmentMenu implements BaseMenu {
     private BaseMenu handleSell(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos no portfólio:");
         wallet.getPortfolio().values().forEach(position ->
-            promptService.printInfo(String.format("  - %s: %.4f unidades", position.getAsset().getTicker(), position.getQuantity())));
+            promptService.printInfo(String.format("  - %s: %.0f unidades", position.getAsset().getTicker(), position.getQuantity())));
         promptService.printInfo("");
 
         String ticker = promptService.readString("Digite o ticker do ativo que deseja vender: ").trim();
@@ -176,7 +177,7 @@ public class InvestmentMenu implements BaseMenu {
         double price = AssetMarket.priceFor(position.getAsset().getTicker());
         try {
             WalletAccount updated = investmentUseCase.sellAsset(wallet, ticker, quantity, price);
-            promptService.printSuccess(String.format("Venda concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
+            promptService.printSuccess(String.format("Venda concluída: %s x %.0f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
         } catch (Exception e) {
             promptService.printError("Erro ao vender ativo: " + e.getMessage());
         }
