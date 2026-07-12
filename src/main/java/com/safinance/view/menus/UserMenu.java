@@ -35,7 +35,7 @@ public class UserMenu implements BaseMenu {
         this.transactionUseCase = transactionUseCase;
 
         registerTransition("1", () -> new ManageAccountsMenu(user, accountUseCase, transactionUseCase), transitions);
-        registerTransition("2", () -> this, transitions);
+        registerTransition("2", () -> new ReportMenu(user, accountUseCase, transactionUseCase, this), transitions);
         registerTransition("3", () -> this, transitions);
         registerTransition("0", () -> null, transitions);
     }
@@ -67,7 +67,7 @@ public class UserMenu implements BaseMenu {
         if (transition != null) {
             if (option.equals("0")) {
                 promptService.printSuccess("Encerrando sessão. Até logo!");
-            } else if (option.equals("2") || option.equals("3")) {
+            } else if (option.equals("3")) {
                 promptService.printWarning("Em desenvolvimento: Funcionalidade ainda não implementada.");
                 promptService.readString("Pressione Enter para tentar novamente.");
             }

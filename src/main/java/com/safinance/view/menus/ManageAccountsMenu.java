@@ -45,18 +45,10 @@ public class ManageAccountsMenu implements BaseMenu {
         if (accounts.isEmpty()) {
             promptService.printWarning("Nenhuma conta encontrada para este usuário.");
         } else {
-            promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Tipo", "Saldo", "Limite"));
-            promptService.printInfo("---------------------------------------------");
+            promptService.printInfo(String.format("%-15s | %-12s | %-10s | %-10s", "Nome", "Tipo", "Saldo", "Limite"));
+            promptService.printInfo("---------------------------------------------------------");
             for (var account : accounts) {
-                if (account instanceof SavingsAccount sa) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10s", "Poupança", sa.getBalance(), "-"));
-                } else if (account instanceof WalletAccount wa) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10s", "Carteira", wa.getBalance(), "-"));
-                } else if (account instanceof CreditAccount ca) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10.2f", "Crédito", ca.getBalance(), ca.getCreditLimit()));
-                } else {
-                    promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Desconhecida", "-", "-"));
-                }
+                promptService.printInfo(account.getDisplaySummary());
             }
         }
 

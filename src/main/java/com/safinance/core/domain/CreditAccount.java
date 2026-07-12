@@ -9,11 +9,12 @@ import com.safinance.core.exception.InvalidTransactionException;
  */
 public class CreditAccount implements Account {
     private final String id;
+    private final String name;
     private final String ownerId;
     private final double balance;
     private final double creditLimit;
 
-    public CreditAccount(String id, String ownerId, double balance, double creditLimit) {
+    public CreditAccount(String id, String ownerId, double balance, double creditLimit, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
@@ -21,6 +22,7 @@ public class CreditAccount implements Account {
         if (balance < -creditLimit) throw new IllegalArgumentException("O saldo inicial não pode ultrapassar o limite de crédito.");
         
         this.id = id;
+        this.name = name;
         this.ownerId = ownerId;
         this.balance = balance;
         this.creditLimit = creditLimit;
@@ -33,9 +35,20 @@ public class CreditAccount implements Account {
     public String getOwnerId() { return ownerId; }
 
     @Override
+    public String getName() { return name; }
+
+    @Override
     public double getBalance() { return balance; }
     
     public double getCreditLimit() { return creditLimit; }
+    
+    @Override
+    public String getAccountType() { return "Crédito"; }
+
+    @Override
+    public String getDisplaySummary() {
+        return String.format("%-15s | %-12s | %-10.2f | %-10.2f", getName(), getAccountType(), getBalance(), getCreditLimit());
+    }
 
     @Override
     public CreditAccount process(Transaction t) {
@@ -52,7 +65,7 @@ public class CreditAccount implements Account {
             throw new InsufficientFundsException("Credit limit exceeded.");
         }
         
-        return new CreditAccount(this.id, this.ownerId, newBalance, this.creditLimit);
+        return new CreditAccount(this.id, this.ownerId, newBalance, this.creditLimit, this.name);
     }
 
     private void validateTransaction(Transaction transaction) {

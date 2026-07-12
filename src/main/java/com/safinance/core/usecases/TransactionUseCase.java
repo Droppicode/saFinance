@@ -135,7 +135,7 @@ public class TransactionUseCase {
         Account sourceAccount = findAccount(sourceAccountId);
         Account destinationAccount = findAccount(destinationAccountId);
 
-        if (!sourceAccount.getOwnerId().equals(destinationAccount.getOwnerId())) {
+        if (!sourceAccount.isOwnedBySameUserAs(destinationAccount)) {
             throw new InvalidTransactionException("Transfers are only allowed between accounts owned by the same user.");
         }
 
@@ -168,6 +168,32 @@ public class TransactionUseCase {
 
         accountRepository.saveAll(List.of(updatedSourceAccount, updatedDestinationAccount));
         transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));
+    }
+
+    /**
+     * Retrieves all transactions associated with a specific account.
+     * @param accountId the account identifier
+     * @return list of transactions
+     */
+    public List<Transaction> getTransactionsForAccount(String accountId) {
+        validateAccountId(accountId, "Account");
+        return transactionRepository.findAll().stream()
+                .filter(t -> t.belongsToAccount(accountId))
+                .toList();
+    }
+
+    /**
+     * Retrieves all transactions associated with multiple accounts.
+     * @param accountIds list of account identifiers
+     * @return list of transactions
+     */
+    public List<Transaction> getTransactionsForAccounts(List<String> accountIds) {
+        if (accountIds == null || accountIds.isEmpty()) {
+            return List.of();
+        }
+        return transactionRepository.findAll().stream()
+                .filter(t -> accountIds.contains(t.getAccountId()))
+                .toList();
     }
 
     private Account findAccount(String accountId) {

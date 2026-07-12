@@ -12,16 +12,18 @@ import com.safinance.core.exception.InvalidTransactionException;
  */
 public class SavingsAccount implements Account {
     private final String id;
+    private final String name;
     private final String ownerId;
     private final double balance;
 
-    public SavingsAccount(String id, String ownerId, double balance) {
+    public SavingsAccount(String id, String ownerId, double balance, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
         if (balance < 0) throw new IllegalArgumentException("O saldo inicial da poupança não pode ser negativo.");
         
         this.id = id;
+        this.name = name;
         this.ownerId = ownerId;
         this.balance = balance;
     }
@@ -33,7 +35,18 @@ public class SavingsAccount implements Account {
     public String getOwnerId() { return ownerId; }
 
     @Override
+    public String getName() { return name; }
+
+    @Override
+    public String getAccountType() { return "Poupança"; }
+    
+    @Override
     public double getBalance() { return balance; }
+
+    @Override
+    public String getDisplaySummary() {
+        return String.format("%-15s | %-12s | %-10.2f | %-10s", getName(), getAccountType(), getBalance(), "-");
+    }
 
     @Override
     public SavingsAccount process(Transaction t) {
@@ -49,7 +62,7 @@ public class SavingsAccount implements Account {
             throw new InsufficientFundsException("Insufficient balance in SavingsAccount.");
         }
         
-        return new SavingsAccount(this.id, this.ownerId, newBalance);
+        return new SavingsAccount(this.id, this.ownerId, newBalance, this.name);
     }
 
     /**
@@ -78,7 +91,7 @@ public class SavingsAccount implements Account {
             throw new IllegalArgumentException("O saldo resultante do rendimento deve ser finito.");
         }
         
-        return new SavingsAccount(this.id, this.ownerId, newBalance);
+        return new SavingsAccount(this.id, this.ownerId, newBalance, this.name);
     }
 
     private void validateTransaction(Transaction transaction) {
