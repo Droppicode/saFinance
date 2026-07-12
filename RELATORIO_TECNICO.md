@@ -37,11 +37,20 @@ classDiagram
         +boolean isAdmin()
         +Role getRole()
     }
+    class Role {
+        <<enumeration>>
+        REGULAR
+        ADMIN
+    }
     class Account {
         <<interface>>
         +String getOwnerId()
+        +boolean isOwnedBy(String ownerId)
+        +boolean isOwnedBySameUserAs(Account other)
         +double getBalance()
-        +process(Transaction t) Account
+        +String getAccountType()
+        +String getDisplaySummary()
+        +process(Transaction t)
     }
     class Transaction {
         <<interface>>
@@ -49,6 +58,8 @@ classDiagram
         +LocalDateTime getDate()
         +String getDescription()
         +String getAccountId()
+        +boolean isIncome()
+        +boolean belongsToAccount(String accountId)
     }
     class Asset {
         <<interface>>
@@ -56,15 +67,15 @@ classDiagram
         +String getName()
     }
     class Bank {
-        <<Singleton>>
+        <<Single Instance>>
         -Map~YearMonth, Double~ yieldRates
-        -Map~String, Double~ operationTaxes
-        -Map~String, Double~ assetPrices
+        -Map~String, TaxStrategy~ operationStrategies
         +double getYieldRate(YearMonth month)
-        +double getOperationTax(String operation)
-        +double getAssetPrice(String ticker)
         +void setYieldRate(YearMonth month, double rate)
-        -generateRandomYieldRate(YearMonth month) double
+        +double operationCost(double amount, String type)
+        +void setOperationTax(String type, double rate)
+        -double randomRate()
+        -generateMissingRatesUpTo(YearMonth target)
     }
     Entity <|-- User
     Entity <|-- Account
@@ -221,14 +232,14 @@ classDiagram
 
     class FinancialStatementTemplate {
         <<abstract>>
-        +generateReport(Account acc, List~Transaction~ txs)
-        #formatHeader(Account acc)
-        #formatBody(List~Transaction~ txs)
-        #formatFooter()
+        +generateReport(User user, List~Account~ accounts, List~Transaction~ transactions)
+        #formatHeader(User user, List~Account~ accounts)
+        #formatBody(List~Transaction~ transactions)
+        #formatFooter(List~Account~ accounts, List~Transaction~ transactions)
     }
-    class UserDetailedStatement
+    class AccountDetailedStatement
     class GlobalBalanceStatement
-    FinancialStatementTemplate <|-- UserDetailedStatement
+    FinancialStatementTemplate <|-- AccountDetailedStatement
     FinancialStatementTemplate <|-- GlobalBalanceStatement
     FinancialStatementTemplate ..> Account : reads
     FinancialStatementTemplate ..> Transaction : reads
@@ -317,18 +328,24 @@ classDiagram
     class InvestmentMenu {
         +showMenu(WalletAccount sessionAccount)
     }
+    class ReportMenu {
+        +showMenu()
+    }
     
     %% A MainView delega para os sub-menus
     ConsoleView --> LoginMenu : delegates
     ConsoleView --> UserMenu : delegates
     ConsoleView --> AdminMenu : delegates
     UserMenu --> InvestmentMenu : delegates
+    UserMenu --> ReportMenu : delegates
 
     %% Os Menus comunicam-se EXCLUSIVAMENTE com os Casos de Uso
     LoginMenu ..> AuthUseCase : calls
     UserMenu ..> AccountUseCase : calls
     UserMenu ..> TransactionUseCase : calls
-    UserMenu ..> FinancialStatementTemplate : calls (gera extrato)
+    ReportMenu ..> FinancialStatementTemplate : calls (gera extrato)
+    ReportMenu ..> AccountUseCase : calls
+    ReportMenu ..> TransactionUseCase : calls
     AdminMenu ..> UserUseCase : calls
     AdminMenu ..> BankUseCase : manages
     InvestmentMenu ..> InvestmentUseCase : calls
@@ -372,7 +389,7 @@ classDiagram
     style StockTaxStrategy fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style FIITaxStrategy fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style TransactionFactory fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
-    style UserDetailedStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style AccountDetailedStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style GlobalBalanceStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
 
     style AuthUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
@@ -386,10 +403,11 @@ classDiagram
     style JsonRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
 
     style ConsoleView fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    style LoginMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    style UserMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    style AdminMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    style InvestmentMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style LoginMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style UserMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style AdminMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style InvestmentMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style ReportMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
 ```
 
 ## 4. Matriz de Justificativa de Design
@@ -402,7 +420,7 @@ A arquitetura do `ObjectFinance` foi desenhada com base em princípios rigorosos
 | :--- | :--- | :--- |
 | **Strategy** | `TaxStrategy`, `CapitalGainsTaxStrategy` | Isola os algoritmos de cálculo de impostos (padrão, isento, ações, FIIs). Evita múltiplos blocos de `if/else` no domínio, permitindo plugar novas regras tributárias sem quebrar as transações e o motor de contas. |
 | **Factory Method** | `TransactionFactory` | Centraliza a complexidade de instanciar transações financeiras. Oculta os detalhes de inicialização (data, validações) e blinda os Casos de Uso, que interagem apenas com a abstração `Transaction`. |
-| **Template Method** | `FinancialStatementTemplate` | Define o "esqueleto" algorítmico da geração de extratos. Enquanto os cabeçalhos/rodapés são gerados no método principal da classe mãe abstrata, as subclasses (`UserDetailedStatement`, etc.) sobrescrevem apenas a formatação do corpo. |
+| **Template Method** | `FinancialStatementTemplate` | Define o "esqueleto" algorítmico da geração de extratos. Enquanto os cabeçalhos/rodapés são gerados no método principal da classe mãe abstrata, as subclasses (`AccountDetailedStatement`, etc.) sobrescrevem apenas a formatação do corpo. |
 
 ### 4.2. Princípios S.O.L.I.D.
 

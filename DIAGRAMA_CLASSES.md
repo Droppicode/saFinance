@@ -17,11 +17,21 @@ classDiagram
         +String getEmail()
         +boolean checkPassword(String password)
         +boolean isAdmin()
+        +Role getRole()
+    }
+    class Role {
+        <<enumeration>>
+        REGULAR
+        ADMIN
     }
     class Account {
         <<interface>>
         +String getOwnerId()
+        +boolean isOwnedBy(String ownerId)
+        +boolean isOwnedBySameUserAs(Account other)
         +double getBalance()
+        +String getAccountType()
+        +String getDisplaySummary()
         +process(Transaction t)
     }
     class Transaction {
@@ -30,6 +40,8 @@ classDiagram
         +LocalDateTime getDate()
         +String getDescription()
         +String getAccountId()
+        +boolean isIncome()
+        +boolean belongsToAccount(String accountId)
     }
     class Asset {
         <<interface>>
@@ -47,7 +59,6 @@ classDiagram
         -double randomRate()
         -generateMissingRatesUpTo(YearMonth target)
     }
-    note for Bank "Instância única criada no Main e injetada por construtor (NÃO Singleton estático), para evitar estado global mutável. Preços de ativos migram para uma futura entidade Market."
     Entity <|-- User
     Entity <|-- Account
     Entity <|-- Transaction
@@ -200,10 +211,10 @@ classDiagram
 
     class FinancialStatementTemplate {
         <<abstract>>
-        +generateReport(Account acc, List~Transaction~ txs)
-        #formatHeader(Account acc)
-        #formatBody(List~Transaction~ txs)
-        #formatFooter()
+        +generateReport(User user, List~Account~ accounts, List~Transaction~ transactions)
+        #formatHeader(User user, List~Account~ accounts)
+        #formatBody(List~Transaction~ transactions)
+        #formatFooter(List~Account~ accounts, List~Transaction~ transactions)
     }
     class AccountDetailedStatement
     class GlobalBalanceStatement
@@ -295,18 +306,24 @@ classDiagram
     class InvestmentMenu {
         +showMenu(WalletAccount sessionAccount)
     }
+    class ReportMenu {
+        +showMenu()
+    }
     
     %% A MainView delega para os sub-menus
     ConsoleView --> LoginMenu : delegates
     ConsoleView --> UserMenu : delegates
     ConsoleView --> AdminMenu : delegates
     UserMenu --> InvestmentMenu : delegates
+    UserMenu --> ReportMenu : delegates
 
     %% Os Menus comunicam-se EXCLUSIVAMENTE com os Casos de Uso
     LoginMenu ..> AuthUseCase : calls
     UserMenu ..> AccountUseCase : calls
     UserMenu ..> TransactionUseCase : calls
-    UserMenu ..> FinancialStatementTemplate : calls (gera extrato)
+    ReportMenu ..> FinancialStatementTemplate : calls (gera extrato)
+    ReportMenu ..> AccountUseCase : calls
+    ReportMenu ..> TransactionUseCase : calls
     AdminMenu ..> UserUseCase : calls
     AdminMenu ..> BankUseCase : manages
     InvestmentMenu ..> InvestmentUseCase : calls
@@ -352,7 +369,7 @@ classDiagram
     style StockTaxStrategy fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style FIITaxStrategy fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style TransactionFactory fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
-    style UserDetailedStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style AccountDetailedStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style GlobalBalanceStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
 
     style AuthUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
@@ -370,6 +387,7 @@ classDiagram
     style UserMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style AdminMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style InvestmentMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style ReportMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
 ```
 
 > **Dica:** Você pode copiar e colar esse código no [Mermaid Live Editor](https://mermaid.live).
