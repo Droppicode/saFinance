@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Mercado de ativos simulado para a aplicação.
@@ -19,6 +21,9 @@ import java.util.stream.Collectors;
 public final class AssetMarket {
 
     private static final Random RANDOM = new Random();
+
+    /** Duração de um bloco/tick de mercado, em segundos. */
+    private static final int BLOCK_SECONDS = 10;
 
     private static final List<Asset> AVAILABLE_ASSETS = List.of(
         new Stock("FTX1", "FTX1", "Fictitious Tech", "Ficticious Tech Co."),
@@ -98,18 +103,67 @@ public final class AssetMarket {
     }
 
     /**
-     * Avança os preços de todos os ativos aplicando uma variação aleatória
-     * baseada na volatilidade configurada. Este método deve ser chamado após
-     * operações de mercado (compra/venda) para simular movimentação de preços.
+     * Avança os preços de todos os ativos em UM bloco de 10 segundos, aplicando
+     * uma variação aleatória composta escalada pela volatilidade de cada ativo.
+     * Use no refresh ao vivo: cada tick visível na tela = uma chamada.
+     */
+    public static void advanceOneBlock() {
+        for (var ticker : CURRENT_PRICES.keySet()) {
+            double current = CURRENT_PRICES.get(ticker);
+            double volatility = PRICE_VOLATILITY.getOrDefault(ticker, 0.1);
+            CURRENT_PRICES.put(ticker, round2(stepOnce(current, volatility)));
+        }
+    }
+
+    /**
+     * Adianta os preços por {@code blocks} blocos de 10s decorridos, usando um
+     * único sorteio cuja magnitude cresce com a raiz de {@code blocks}. Use no
+     * "catch-up" ao voltar à tela depois de um tempo — evita o disparo que
+     * repetir {@link #advanceOneBlock()} milhares de vezes causaria.
+     *
+     * @param blocks número de blocos de 10s decorridos (valores <= 0 são ignorados)
+     */
+    public static void catchUp(long blocks) {
+        if (blocks <= 0) return;
+        for (var ticker : CURRENT_PRICES.keySet()) {
+            double current = CURRENT_PRICES.get(ticker);
+            double volatility = PRICE_VOLATILITY.getOrDefault(ticker, 0.1);
+            CURRENT_PRICES.put(ticker, round2(stepScaled(current, volatility, blocks)));
+        }
+    }
+
+    /**
+     * Compatibilidade: uma operação de mercado (compra/venda) avança um bloco.
      */
     public static void refreshPricesAfterOperation() {
-        for (var ticker : CURRENT_PRICES.keySet()) {
-            Double current = CURRENT_PRICES.get(ticker);
-            Double volatility = PRICE_VOLATILITY.getOrDefault(ticker, 0.1);
-            double randomFactor = 1.0 + (RANDOM.nextGaussian() * volatility);
-            double nextPrice = Math.max(1.0, current * randomFactor);
-            CURRENT_PRICES.put(ticker, Math.round(nextPrice * 100.0) / 100.0);
-        }
+        advanceOneBlock();
+    }
+
+    /** Um passo composto: preço * (1 + gaussiana * volatilidade), com piso em 1.0. */
+    private static double stepOnce(double price, double volatility) {
+        double factor = 1.0 + RANDOM.nextGaussian() * volatility;
+        return Math.max(1.0, price * factor);
+    }
+
+    /** Sorteio único escalado por raiz(blocks): preço * (1 + gaussiana * volatilidade * raiz(blocks)), piso em 1.0. */
+    private static double stepScaled(double price, double volatility, long blocks) {
+        double factor = 1.0 + RANDOM.nextGaussian() * volatility * Math.sqrt(blocks);
+        return Math.max(1.0, price * factor);
+    }
+
+    /** Arredonda um preço para duas casas decimais. */
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    /**
+     * Número de blocos inteiros de 10s entre dois instantes (nunca negativo).
+     * O chamador (a tela/persistência) guarda o instante do último fechamento e
+     * passa aqui para calcular quantos blocos aplicar no catch-up.
+     */
+    public static long blocksBetween(Instant from, Instant to) {
+        long seconds = Duration.between(from, to).getSeconds();
+        return Math.max(0, seconds / BLOCK_SECONDS);
     }
 
     /**
