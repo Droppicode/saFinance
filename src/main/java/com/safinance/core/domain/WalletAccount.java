@@ -35,7 +35,9 @@ public class WalletAccount implements Account {
     @Override
     public double getBalance() { return balance; }
 
-    public Map<String, AssetPosition> getPortfolio() { return portfolio; }
+    public Map<String, AssetPosition> getPortfolio() {
+        return portfolio == null ? Collections.emptyMap() : portfolio;
+    }
 
     @Override
     public WalletAccount process(Transaction t) {
