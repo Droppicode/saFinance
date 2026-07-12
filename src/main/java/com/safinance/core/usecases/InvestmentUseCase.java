@@ -1,16 +1,14 @@
 package com.safinance.core.usecases;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.safinance.core.domain.Account;
 import com.safinance.core.domain.Asset;
-import com.safinance.core.domain.AssetMarket;
-import com.safinance.core.domain.AssetPosition;
+import com.safinance.core.domain.Market;
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.User;
+import com.safinance.core.domain.Transaction;
+import com.safinance.core.domain.TransactionFactory;
 import com.safinance.infra.persistence.Repository;
 
 /**
@@ -19,9 +17,15 @@ import com.safinance.infra.persistence.Repository;
 public class InvestmentUseCase {
 
     private final Repository<Account, String> accountRepository;
+    private final Repository<Transaction, String> transactionRepository;
+    private final TransactionFactory transactionFactory;
+    private final Market market;
 
-    public InvestmentUseCase(Repository<Account, String> accountRepository) {
+    public InvestmentUseCase(Repository<Account, String> accountRepository, Repository<Transaction, String> transactionRepository, TransactionFactory transactionFactory, Market market) {
         this.accountRepository = accountRepository;
+        this.transactionRepository = transactionRepository;
+        this.transactionFactory = transactionFactory;
+        this.market = market;
     }
 
     public WalletAccount getWalletAccount(User user) {
@@ -39,23 +43,12 @@ public class InvestmentUseCase {
         if (quantity <= 0) throw new IllegalArgumentException("Quantidade deve ser maior que zero.");
         if (pricePerUnit <= 0) throw new IllegalArgumentException("Preço por unidade deve ser maior que zero.");
 
-        double totalCost = quantity * pricePerUnit;
-        if (wallet.getBalance() < totalCost) {
-            throw new IllegalArgumentException("Saldo insuficiente para comprar este ativo.");
-        }
+        Transaction tx = transactionFactory.createBuyAsset(asset, quantity, pricePerUnit, wallet.getId());
+        WalletAccount updated = (WalletAccount) wallet.process(tx);
 
-        Map<String, AssetPosition> newPortfolio = new HashMap<>(wallet.getPortfolio());
-        var position = newPortfolio.get(asset.getTicker());
-        if (position == null) {
-            position = new AssetPosition(asset, quantity, pricePerUnit, LocalDateTime.now());
-        } else {
-            position = position.updatePosition(quantity, pricePerUnit);
-        }
-        newPortfolio.put(asset.getTicker(), position);
-
-        WalletAccount updated = wallet.withPortfolio(newPortfolio).withBalance(wallet.getBalance() - totalCost);
         accountRepository.save(updated);
-        AssetMarket.refreshPricesAfterOperation();
+        transactionRepository.save(tx);
+        market.refreshPricesAfterOperation();
         return updated;
     }
 
@@ -65,23 +58,12 @@ public class InvestmentUseCase {
         if (quantity <= 0) throw new IllegalArgumentException("Quantidade deve ser maior que zero.");
         if (pricePerUnit <= 0) throw new IllegalArgumentException("Preço por unidade deve ser maior que zero.");
 
-        var position = wallet.getPortfolio().get(ticker);
-        if (position == null) {
-            throw new IllegalArgumentException("Ativo não encontrado no portfólio.");
-        }
+        Transaction tx = transactionFactory.createSellAsset(ticker, quantity, pricePerUnit, wallet.getId());
+        WalletAccount updated = (WalletAccount) wallet.process(tx);
 
-        AssetPosition updatedPosition = position.reducePosition(quantity);
-        Map<String, AssetPosition> newPortfolio = new HashMap<>(wallet.getPortfolio());
-        if (updatedPosition == null) {
-            newPortfolio.remove(ticker);
-        } else {
-            newPortfolio.put(ticker, updatedPosition);
-        }
-
-        double proceeds = quantity * pricePerUnit;
-        WalletAccount updated = new WalletAccount(wallet.getId(), wallet.getOwnerId(), wallet.getBalance() + proceeds, newPortfolio, wallet.getName());
         accountRepository.save(updated);
-        AssetMarket.refreshPricesAfterOperation();
+        transactionRepository.save(tx);
+        market.refreshPricesAfterOperation();
         return updated;
     }
 
@@ -93,5 +75,7 @@ public class InvestmentUseCase {
             .toList();
     }
 
-    //TODO: refresh a cada 5 ou 10s; persistencia de ultimo valor dos assets (qnd eu saí da tela de investimentos) e cálculo do novo valor (volatilidade x quantidade de blocos de 10s passados desde o ultimo fechamento). atualização da tela em tempo de execução a cada vez que o refresh é feito.
+    public Market getMarket() {
+        return market;
+    }
 }

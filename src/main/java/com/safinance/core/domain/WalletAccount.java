@@ -71,7 +71,30 @@ public class WalletAccount implements Account {
             throw new InsufficientFundsException("Insufficient balance in WalletAccount.");
         }
         
-        return new WalletAccount(this.id, this.ownerId, newBalance, this.portfolio, this.name);
+        Map<String, AssetPosition> newPortfolio = new HashMap<>(getPortfolio());
+
+        if (t instanceof BuyAssetTransaction buyTx) {
+            var position = newPortfolio.get(buyTx.getAsset().getTicker());
+            if (position == null) {
+                position = new AssetPosition(buyTx.getAsset(), buyTx.getQuantity(), buyTx.getPricePerUnit(), t.getDate());
+            } else {
+                position = position.updatePosition(buyTx.getQuantity(), buyTx.getPricePerUnit());
+            }
+            newPortfolio.put(buyTx.getAsset().getTicker(), position);
+        } else if (t instanceof SellAssetTransaction sellTx) {
+            var position = newPortfolio.get(sellTx.getTicker());
+            if (position == null) {
+                throw new InvalidTransactionException("Ativo não encontrado no portfólio.");
+            }
+            AssetPosition updatedPosition = position.reducePosition(sellTx.getQuantity());
+            if (updatedPosition == null) {
+                newPortfolio.remove(sellTx.getTicker());
+            } else {
+                newPortfolio.put(sellTx.getTicker(), updatedPosition);
+            }
+        }
+        
+        return new WalletAccount(this.id, this.ownerId, newBalance, newPortfolio, this.name);
     }
 
     private void validateTransaction(Transaction t) {

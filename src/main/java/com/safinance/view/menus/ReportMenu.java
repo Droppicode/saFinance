@@ -83,7 +83,7 @@ public class ReportMenu implements BaseMenu {
         promptService.printInfo("Selecione a conta para o extrato:");
         for (int i = 0; i < accounts.size(); i++) {
             Account acc = accounts.get(i);
-            System.out.printf("%d - %s (%s) (Saldo: R$ %.2f)%n", i + 1, acc.getName(), acc.getAccountType(), acc.getBalance());
+            promptService.printInfo(String.format("%d - %s (%s) (Saldo: R$ %.2f)", i + 1, acc.getName(), acc.getAccountType(), acc.getBalance()));
         }
 
         String input = promptService.readString("> Conta: ");
@@ -96,7 +96,7 @@ public class ReportMenu implements BaseMenu {
                 AccountDetailedStatement statement = new AccountDetailedStatement();
                 String report = statement.generateReport(user, List.of(selectedAccount), transactions);
                 
-                System.out.println(report);
+                promptService.printInfo(report);
             } else {
                 promptService.printError("Conta inválida.");
             }
@@ -123,7 +123,7 @@ public class ReportMenu implements BaseMenu {
         GlobalBalanceStatement statement = new GlobalBalanceStatement();
         String report = statement.generateReport(user, accounts, transactions);
         
-        System.out.println(report);
+        promptService.printInfo(report);
 
         promptService.readString("Pressione Enter para voltar.");
         return this;

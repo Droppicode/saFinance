@@ -26,6 +26,9 @@ import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.Stock;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
+import com.safinance.core.domain.Bank;
+import com.safinance.core.domain.Market;
+import com.safinance.core.domain.SimulatedAssetMarket;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.BankUseCase;
@@ -42,6 +45,8 @@ import java.time.LocalDateTime;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.IncomeTransaction;
 import com.safinance.core.domain.ExpenseTransaction;
+import com.safinance.core.domain.BuyAssetTransaction;
+import com.safinance.core.domain.SellAssetTransaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.usecases.TransactionUseCase;
 import java.time.YearMonth;
@@ -79,7 +84,9 @@ public class Main {
             .registerSubtype(FixedIncome.class);
         PolymorphicTypeAdapterFactory<Transaction> transactionAdapterFactory = PolymorphicTypeAdapterFactory.of(Transaction.class)
             .registerSubtype(IncomeTransaction.class)
-            .registerSubtype(ExpenseTransaction.class);
+            .registerSubtype(ExpenseTransaction.class)
+            .registerSubtype(BuyAssetTransaction.class)
+            .registerSubtype(SellAssetTransaction.class);
 
         Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -108,10 +115,12 @@ public class Main {
         UserUseCase userUseCase = new UserUseCase(userRepository);
         BankUseCase bankUseCase = new BankUseCase(bank);
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
-        InvestmentUseCase investmentUseCase = new InvestmentUseCase(accountRepository);
 
         TransactionFactory transactionFactory = new TransactionFactory();
         TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory, bank);
+
+        Market market = new SimulatedAssetMarket();
+        InvestmentUseCase investmentUseCase = new InvestmentUseCase(accountRepository, transactionRepository, transactionFactory, market);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
         try {
