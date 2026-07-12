@@ -115,7 +115,7 @@ public class Main {
                 dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
             } catch (Exception ignore) {}
             
-            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase);
+            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase, transactionUseCase);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {

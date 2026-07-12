@@ -8,6 +8,8 @@ import com.safinance.view.actions.RegisterAction;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.UserUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,17 +26,19 @@ public class WelcomeMenu implements BaseMenu {
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
 
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
-        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, accountUseCase), transitions);
-        registerTransition("2", () -> new RegisterAction(authUseCase, userUseCase, accountUseCase), transitions);
+        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new RegisterAction(authUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 
