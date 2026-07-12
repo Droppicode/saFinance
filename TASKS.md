@@ -37,7 +37,7 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     - [x] Criar TransactionUseCase
     - [x] Persistir histórico de transações
     - [ ] Adicionar testes automatizados
-    - [ ] Integrar operações aos menus
+    - [x] Integrar operações aos menus
 - [ ] Banco
 - [ ] Menu admin
 - Relatórios
