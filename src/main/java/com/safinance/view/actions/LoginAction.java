@@ -7,16 +7,13 @@ import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.AdminMenu;
 import com.safinance.view.menus.UserMenu;
 import com.safinance.view.menus.WelcomeMenu;
-import com.safinance.core.usecases.TransactionUseCase;
-
-import java.util.List;
-import java.util.Collections;
 
 /**
  * Menu de login para a aplicação.
@@ -59,7 +56,7 @@ public class LoginAction implements BaseMenu {
         try { 
             if (email.equals("teste")) { // Temporário para teste de funções
                 User loggedIn = authUseCase.login("admin@safinance.com", "123456");
-                return new AdminMenu(loggedIn, userUseCase, bankUseCase, accountUseCase);
+                return new AdminMenu(loggedIn, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
             }
 
             if (email.isEmpty() || password.isEmpty()) {
@@ -67,7 +64,7 @@ public class LoginAction implements BaseMenu {
             }
             User user = authUseCase.login(email, password);
             if (user.isAdmin()) {
-                return new AdminMenu(user, userUseCase, bankUseCase, accountUseCase);
+                return new AdminMenu(user, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
             } else {
                 return new UserMenu(user, accountUseCase, transactionUseCase);
             }

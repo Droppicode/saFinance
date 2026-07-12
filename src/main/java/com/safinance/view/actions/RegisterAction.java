@@ -8,15 +8,12 @@ import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.ManageUsersMenu;
 import com.safinance.view.menus.WelcomeMenu;
-import com.safinance.core.usecases.TransactionUseCase;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Menu de Registro (Criação de nova conta de usuário).
@@ -78,8 +75,8 @@ public class RegisterAction implements BaseMenu {
         
         promptService.readString("Pressione Enter para retornar.");
         if (user != null && user.getRole() == Role.ADMIN) {
-            return new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase);
+            return new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase);
         }
-        return new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase);
+        return new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
     }
 }

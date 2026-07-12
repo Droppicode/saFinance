@@ -6,6 +6,7 @@ import java.util.List;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
@@ -20,6 +21,7 @@ public class UpdateOperationTaxAction implements BaseMenu {
     private final BankUseCase bankUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
+        private final TransactionUseCase transactionUseCase;
 
     /**
      * Construtor que inicializa a ação com as dependências necessárias
@@ -28,11 +30,12 @@ public class UpdateOperationTaxAction implements BaseMenu {
      * @param userUseCase Use case de usuário
      * @param accountUseCase Use case de conta
      */
-    public UpdateOperationTaxAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public UpdateOperationTaxAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.bankUseCase = bankUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
     }
 
     /**
@@ -73,7 +76,7 @@ public class UpdateOperationTaxAction implements BaseMenu {
         // Aguarda o usuário pressionar Enter para retornar
         promptService.readString("Pressione Enter para retornar.");
         // Retorna ao menu anterior
-        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase);
+        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase);
     }
     
 }

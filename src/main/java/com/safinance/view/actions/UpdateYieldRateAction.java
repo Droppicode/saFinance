@@ -7,6 +7,7 @@ import java.util.List;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
@@ -18,12 +19,14 @@ public class UpdateYieldRateAction implements BaseMenu {
     private final BankUseCase bankUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
-    public UpdateYieldRateAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public UpdateYieldRateAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.bankUseCase = bankUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
     }
 
     @Override
@@ -50,7 +53,7 @@ public class UpdateYieldRateAction implements BaseMenu {
         }
 
         promptService.readString("Pressione Enter para retornar.");
-        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase); // Retorna ao menu anterior
+        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase); // Retorna ao menu anterior
     }
     
 }

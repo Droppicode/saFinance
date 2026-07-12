@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
@@ -22,6 +23,7 @@ public class UserSelectionMenu implements BaseMenu {
     private final UserUseCase userUseCase;
     private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
@@ -31,12 +33,14 @@ public class UserSelectionMenu implements BaseMenu {
      * @param bankUseCase A instância do caso de uso de bancos.
      * @param userUseCase A instância do caso de uso de usuários.
      * @param accountUseCase A instância do caso de uso de contas.
+     * @param transactionUseCase A instância do caso de uso de transações.
      */
-    public UserSelectionMenu(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public UserSelectionMenu(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.bankUseCase = bankUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;   
     }
 
     /**
@@ -48,7 +52,7 @@ public class UserSelectionMenu implements BaseMenu {
         promptService.printHeader("Seleção de Usuário");
         promptService.printInfo("");
 
-        transitions.put("0", () -> new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase));
+        transitions.put("0", () -> new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase));
 
         var users = userUseCase.getAllUsers();
         if (users.isEmpty()) {
@@ -60,7 +64,7 @@ public class UserSelectionMenu implements BaseMenu {
         for (User u : users) {
             promptService.printInfo(index + ". " + u.getName() + " (" + u.getEmail() + ")");
             final int chosenIndex = index;
-            transitions.put(String.valueOf(chosenIndex), () -> new ManageAccountsMenu(user, u, userUseCase, bankUseCase, accountUseCase));
+            transitions.put(String.valueOf(chosenIndex), () -> new ManageAccountsMenu(user, u, userUseCase, bankUseCase, accountUseCase, transactionUseCase));
             index++;
         }
 

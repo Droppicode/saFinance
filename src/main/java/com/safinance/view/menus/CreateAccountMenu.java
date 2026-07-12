@@ -1,28 +1,21 @@
 package com.safinance.view.menus;
 
-import com.safinance.view.BaseMenu;
-import com.safinance.view.PromptService;
-import com.safinance.view.actions.CreateCreditAccountAction;
-
-import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import com.safinance.view.actions.CreateWalletAccountAction;
-import com.safinance.view.actions.CreateSavingsAccountAction;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.actions.CreateCreditAccountAction;
+import com.safinance.view.actions.CreateSavingsAccountAction;
+import com.safinance.view.actions.CreateWalletAccountAction;
 
 public class CreateAccountMenu implements BaseMenu {
 
@@ -43,10 +36,10 @@ public class CreateAccountMenu implements BaseMenu {
         this.accountUseCase = accountUseCase;
         this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new CreateWalletAccountAction(user, accountUseCase, transactionUseCase), transitions);
-        registerTransition("2", () -> new CreateSavingsAccountAction(user, accountUseCase, transactionUseCase), transitions);
-        registerTransition("3", () -> new CreateCreditAccountAction(user, accountUseCase, transactionUseCase), transitions); 
-        registerTransition("0", () -> new ManageAccountsMenu(user, accountUseCase, transactionUseCase), transitions);
+        registerTransition("1", () -> new CreateWalletAccountAction(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new CreateSavingsAccountAction(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
+        registerTransition("3", () -> new CreateCreditAccountAction(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions); 
+        registerTransition("0", () -> new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
     }
 
     @Override

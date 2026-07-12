@@ -6,17 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.safinance.core.domain.CreditAccount;
 import com.safinance.core.domain.Role;
-import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
-import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
-import com.safinance.core.usecases.TransactionUseCase;
 
 
 public class ManageAccountsMenu implements BaseMenu {
@@ -40,13 +37,13 @@ public class ManageAccountsMenu implements BaseMenu {
         this.accountUseCase = accountUseCase;
         this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase), transitions);
-        registerTransition("2", () -> new TransactionMenu(user, accountUseCase, transactionUseCase), transitions);
-        registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase), transitions);
+        registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new TransactionMenu(user, accountOwner, accountUseCase, userUseCase, bankUseCase, transactionUseCase), transitions);
+        registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
         if (user.getRole() == Role.REGULAR) {
-            registerTransition("0", () -> new UserMenu(user, accountUseCase), transitions);
+            registerTransition("0", () -> new UserMenu(user, accountUseCase, transactionUseCase), transitions);
         } else {
-            registerTransition("0", () -> new UserSelectionMenu(user, bankUseCase, userUseCase, accountUseCase), transitions);
+            registerTransition("0", () -> new UserSelectionMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
         }
     }
 
