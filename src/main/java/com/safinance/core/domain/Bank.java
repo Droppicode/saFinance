@@ -36,6 +36,12 @@ public class Bank {
     private static final double MIN_RATE = 0.004;
     private static final double MAX_RATE = 0.006;
 
+    /** Operation types mapped to the strategy that computes their fee. */
+    private final Map<String, TaxStrategy> operationStrategies = new HashMap<>();
+
+    /** Default fee rate charged on transfers (business rule, 1%). */
+    private static final double DEFAULT_TRANSFER_RATE = 0.01;
+
     /**
      * Creates the bank anchored at a starting month and its rate.
      *
@@ -48,6 +54,10 @@ public class Bank {
         this.inceptionMonth = startMonth;
         this.lastKnownMonth = startMonth;
         this.yieldRates.put(startMonth, startRate);
+
+        // Register the default operation-fee strategies. Operation types that are
+        // not registered here fall through to a tax-exempt strategy in operationCost().
+        this.operationStrategies.put("TRANSFER", new StandardTax(DEFAULT_TRANSFER_RATE));
     }
 
     /**
@@ -93,6 +103,24 @@ public class Bank {
             generateMissingRatesUpTo(month); // fill the gap, then override just below
         }
         yieldRates.put(month, rate);
+    }
+
+    /**
+     * Returns the fee charged for an operation of the given amount and type.
+     *
+     * <p>The calculation is delegated to the {@link TaxStrategy} registered for
+     * the operation type; unregistered types are treated as tax-exempt. No
+     * conditional branching on the type is needed — the map plus polymorphism
+     * pick the right rule, keeping the bank open for new operation types
+     * without modification (Open/Closed Principle).</p>
+     *
+     * @param amount the operation amount
+     * @param type   the operation type (e.g. "TRANSFER")
+     * @return the fee to be charged for the operation
+     */
+    public double operationCost(double amount, String type) {
+        TaxStrategy strategy = operationStrategies.getOrDefault(type, new ExemptTax());
+        return strategy.calculateTax(amount);
     }
 
     /**

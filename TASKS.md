@@ -29,7 +29,7 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     = [ ] Aplicar rendimento em poupança.
 - [ ] Transação, crédito, débito
 - [ ] Banco
-    - [ ] Criar entidade Bank como instância única injetada 
+    - [x] Criar entidade Bank como instância única injetada 
     - [x] Rendimento da poupança
         - [x] Map<YearMonth, Double> yieldRates
         - [x] getYieldRate(YearMonth) — retorna a taxa do mês
