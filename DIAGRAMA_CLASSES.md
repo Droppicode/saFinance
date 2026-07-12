@@ -205,9 +205,9 @@ classDiagram
         #formatBody(List~Transaction~ txs)
         #formatFooter()
     }
-    class UserDetailedStatement
+    class AccountDetailedStatement
     class GlobalBalanceStatement
-    FinancialStatementTemplate <|-- UserDetailedStatement
+    FinancialStatementTemplate <|-- AccountDetailedStatement
     FinancialStatementTemplate <|-- GlobalBalanceStatement
     FinancialStatementTemplate ..> Account : reads
     FinancialStatementTemplate ..> Transaction : reads
