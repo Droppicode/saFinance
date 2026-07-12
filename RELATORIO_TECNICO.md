@@ -1,6 +1,24 @@
-# Diagrama de Classes UML 
+# Relatório Técnico de Arquitetura - ObjectFinance
 
-Este diagrama representa a arquitetura completa do `ObjectFinance`.
+## 1. Repositório
+**Link do Repositório Git:** [https://github.com/Droppicode/saFinance](https://github.com/Droppicode/saFinance)
+
+## 2. Mapeamento do Domínio do Problema e Justificativa Semântica
+
+O **ObjectFinance** é um simulador de ecossistema bancário digital e de gestão de investimentos (*Wealth Management*). O domínio central do problema consiste em fornecer a usuários uma plataforma para gerenciar e diversificar seu patrimônio financeiro por meio de múltiplas contas (Contas Corrente/Carteira, Crédito e Poupança). O sistema deve lidar não apenas com transações cotidianas (receitas, despesas e transferências tarifadas), mas também com a negociação de ativos no mercado financeiro (Ações, Fundos Imobiliários e Renda Fixa). Isso implica rastrear a custódia, apurar o preço médio de aquisição e, em eventos de venda, calcular os ganhos de capital (lucro) aplicando diferentes estratégias de retenção de impostos, de acordo com as regras governamentais e a política tarifária da instituição (Banco).
+
+As entidades escolhidas para compor o núcleo (`core.domain`) foram desenhadas para refletir fielmente os conceitos do mundo real:
+
+*   **`User` (e sub-tipos `RegularUser`, `AdminUser`):** Representam as pessoas físicas (atores) da instituição financeira. A separação semântica justifica-se pela distinção de responsabilidades: usuários comuns operam o próprio patrimônio, enquanto administradores gerenciam as regras macroeconômicas do banco.
+*   **`Account` (e sub-tipos `WalletAccount`, `CreditAccount`, `SavingsAccount`):** Representam os diferentes veículos de alocação de saldo. Semanticamente, a `WalletAccount` atua de forma mista como conta corrente e carteira de corretora (custódia); a `CreditAccount` lida com saldos devedores limitados; e a `SavingsAccount` modela capital sujeito a rendimentos mensais.
+*   **`Transaction` (e sub-tipos):** Representam eventos financeiros puros (fatos contábeis). Semanticamente, atuam como evidências históricas de movimentação (entradas, saídas, pagamento de taxas, compra/venda de ativos) que justificam qualquer variação no patrimônio das contas.
+*   **`Asset` (e sub-tipos `Stock`, `RealEstateFund`, `FixedIncome`):** Representam os instrumentos financeiros reais disponíveis para negociação no mercado, separando a essência do produto (como Ticker e Setor) de quem o possui.
+*   **`AssetPosition`:** Representa a posse. É o vínculo direto entre uma `WalletAccount` e um `Asset`, justificando a necessidade de registrar não apenas a quantidade possuída, mas o histórico do custo de aquisição (preço médio) exigido para a tributação.
+*   **`Bank`:** Representa a instituição mantenedora central. Justifica-se como a entidade soberana que dita as taxas de juros (`yieldRates`) e tributações (`operationTaxes`) que regem todo o ecossistema.
+
+## 3. Diagrama de Classes UML Completo
+
+*(Nota: O diagrama abaixo reflete a arquitetura global projetada. A validação técnica do código atual (`src/main/java/.../core/domain`) confirma que os blocos centrais — interfaces essenciais, segregação de contas e o mecanismo central de processamento imutável de transações (padrão Wither) — já estão operantes conforme idealizado na base de domínio).*
 
 ```mermaid
 classDiagram
@@ -17,12 +35,13 @@ classDiagram
         +String getEmail()
         +boolean checkPassword(String password)
         +boolean isAdmin()
+        +Role getRole()
     }
     class Account {
         <<interface>>
         +String getOwnerId()
         +double getBalance()
-        +process(Transaction t)
+        +process(Transaction t) Account
     }
     class Transaction {
         <<interface>>
@@ -61,12 +80,14 @@ classDiagram
         -String name
         -String email
         -String passwordHash
+        -Role role
     }
     class AdminUser {
         -String id
         -String name
         -String email
         -String passwordHash
+        -Role role
     }
     User <|.. RegularUser
     User <|.. AdminUser
@@ -84,22 +105,23 @@ classDiagram
         -String ownerId
         -double balance
         -Map~String, AssetPosition~ portfolio
-        +process(Transaction t)
+        +process(Transaction t) Account
         +addAsset(Asset a, double quantity, double price)
         +removeAsset(Asset a, double quantity)
+        +withPortfolio(Map portfolio) WalletAccount
     }
     class CreditAccount {
         -String id
         -String ownerId
         -double balance
         -double creditLimit
-        +process(Transaction t)
+        +process(Transaction t) Account
     }
     class SavingsAccount {
         -String id
         -String ownerId
         -double balance
-        +process(Transaction t)
+        +process(Transaction t) Account
         +applyMonthlyYield(YearMonth month, Bank bank)
     }
     Account <|.. WalletAccount
@@ -317,9 +339,7 @@ classDiagram
     classDef domain fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
     classDef usecase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef infra fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
-    classDef view fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-
-    %% Aplicando as cores diretamente nas classes
+    
     %% DOMAIN - INTERFACES (Azul Escuro)
     style Entity fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
     style User fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
@@ -355,21 +375,80 @@ classDiagram
     style UserDetailedStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
     style GlobalBalanceStatement fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:#fff
 
-    style AuthUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
-    style UserUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
-    style AccountUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
-    style TransactionUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
-    style BankUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
-    style InvestmentUseCase fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:#fff
+    style AuthUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style UserUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style AccountUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style TransactionUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style BankUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style InvestmentUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
 
-    style DataRepository fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
-    style JsonRepository fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
+    style DataRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    style JsonRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
 
-    style ConsoleView fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style LoginMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style UserMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style AdminMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
-    style InvestmentMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style ConsoleView fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style LoginMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style UserMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style AdminMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style InvestmentMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
 ```
 
-> **Dica:** Você pode copiar e colar esse código no [Mermaid Live Editor](https://mermaid.live).
+## 4. Matriz de Justificativa de Design
+
+A arquitetura do `ObjectFinance` foi desenhada com base em princípios rigorosos de Orientação a Objetos. Abaixo detalhamos de forma direta como os padrões e heurísticas foram implementados:
+
+### 4.1. Padrões de Projeto (GoF)
+
+| Padrão | Onde foi aplicado? | Justificativa / Semântica |
+| :--- | :--- | :--- |
+| **Strategy** | `TaxStrategy`, `CapitalGainsTaxStrategy` | Isola os algoritmos de cálculo de impostos (padrão, isento, ações, FIIs). Evita múltiplos blocos de `if/else` no domínio, permitindo plugar novas regras tributárias sem quebrar as transações e o motor de contas. |
+| **Factory Method** | `TransactionFactory` | Centraliza a complexidade de instanciar transações financeiras. Oculta os detalhes de inicialização (data, validações) e blinda os Casos de Uso, que interagem apenas com a abstração `Transaction`. |
+| **Template Method** | `FinancialStatementTemplate` | Define o "esqueleto" algorítmico da geração de extratos. Enquanto os cabeçalhos/rodapés são gerados no método principal da classe mãe abstrata, as subclasses (`UserDetailedStatement`, etc.) sobrescrevem apenas a formatação do corpo. |
+
+### 4.2. Princípios S.O.L.I.D.
+
+| Princípio | Evidência na Implementação | Benefício Alcançado |
+| :--- | :--- | :--- |
+| **S**RP *(Responsabilidade Única)* | Casos de Uso vs Factories | Um Caso de Uso orquestra fluxo. A Factory cria. A Strategy calcula. As responsabilidades estão perfeitamente pulverizadas, mantendo a coesão altíssima. |
+| **O**CP *(Aberto/Fechado)* | Hierarquia de `Asset` | Para introduzir "Criptomoedas" no sistema, basta criar um novo `Asset` e uma nova `TaxStrategy`. A lógica central da `WalletAccount` permanece intacta (fechada para modificação, aberta para extensão). |
+| **L**SP *(Substituição de Liskov)* | Métodos `.process(Transaction)` | As subclasses de `Account` honram contratos base. Qualquer conta pode ser processada uniformemente pelo polimorfismo sem quebrar o estado financeiro. |
+| **I**SP *(Segregação de Interfaces)* | Diferenciação de `Tax` e `CapitalGains` | A tributação sobre venda de ativos exige parâmetros como lucros e tempo de posse, enquanto a tributação bancária é simples. A separação das interfaces não obriga contas correntes simples a dependerem de lógicas de "Home Broker". |
+| **D**IP *(Inversão de Dependência)* | `DataRepository<T>` | Os Casos de Uso conversam com o "Porta" (interface abstrata). O sistema não conhece o banco de dados. A implementação JSON (`JsonRepository`) está numa camada fraca (Infra) e acoplada através da injeção de dependência. |
+
+### 4.3. GRASP & Regras de Domínio
+
+| Princípio / Heurística | Onde está? | Explicação Funcional |
+| :--- | :--- | :--- |
+| **Creator** | `TransactionFactory` | Regra direta: quem possui o conhecimento para inicializar o objeto, o cria. |
+| **Controller** | `UseCases` (Layer Verde) | Coordenam as requisições que vêm dos menus da View, manipulando entidades e chamando o repositório. Protegem o domínio de vazamentos lógicos para a UI. |
+| **Information Expert** | `AssetPosition` | Detém total soberania e expertise dos dados. Ela é a *única* classe que sabe calcular o Preço Médio (Average Price) quando novas cotas são adicionadas. |
+| **Blindagem / Fail-Fast** | `Account.process()` / Padrão Wither | Como regra do *Domain-Driven Design (DDD)* em modelos ricos, não existem `setters` públicos anêmicos. Operações falham imediatamente ao violar a realidade (ex: falta de saldo, cota inválida).
+
+## 5. Guia de Execução
+
+Este projeto foi construído utilizando **Java** e **Maven**. Siga os passos abaixo para compilar e executar o sistema no terminal:
+
+### 5.1. Pré-requisitos
+*   **Java Development Kit (JDK):** Versão 17 ou superior.
+*   **Maven:** Instalado e configurado no PATH (`mvn -version` para verificar).
+
+### 5.2. Compilação e Execução
+
+Para compilar o código fonte, baixar as dependências e iniciar o Menu Principal Interativo, execute o seguinte comando na raiz do projeto (onde está o arquivo `pom.xml`):
+
+```bash
+# Limpa builds anteriores e compila o projeto
+mvn clean compile
+
+# Executa o sistema a partir da classe Main
+mvn exec:java -Dexec.mainClass="com.safinance.Main"
+```
+
+### 5.3. Execução dos Testes Automatizados
+
+O projeto possui uma suíte de testes unitários que valida as regras de negócio centrais (Cálculos de Impostos, Criação de Transações, Saldos e Regras Imutáveis). Para rodar os testes:
+
+```bash
+mvn test
+```
+
+> **Dica:** Os dados persistidos da aplicação são salvos localmente na pasta `data/` em formato `.json` por padrão. Se desejar resetar o banco de dados da aplicação para testar com um ambiente limpo, basta apagar o conteúdo ou deletar os arquivos dentro do diretório `data/`.
