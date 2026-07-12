@@ -2,84 +2,55 @@ package com.safinance.view.actions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
-import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
-import com.safinance.view.menus.ManageBanksMenu;
 
 /**
  * Ação para atualizar a taxa de operação de um banco.
  */
 public class UpdateOperationTaxAction implements BaseMenu {
     
-    private final User user;
     private final BankUseCase bankUseCase;
-    private final UserUseCase userUseCase;
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-        private final TransactionUseCase transactionUseCase;
+    private final Supplier<BaseMenu> onComplete;
 
-    /**
-     * Construtor que inicializa a ação com as dependências necessárias
-     * @param user Usuário logado
-     * @param bankUseCase Use case bancário
-     * @param userUseCase Use case de usuário
-     * @param accountUseCase Use case de conta
-     */
-    public UpdateOperationTaxAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
-        this.user = user;
+    public UpdateOperationTaxAction(BankUseCase bankUseCase, Supplier<BaseMenu> onComplete) {
         this.bankUseCase = bankUseCase;
-        this.userUseCase = userUseCase;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.onComplete = onComplete;
     }
 
-    /**
-     * Exibe o cabeçalho do menu de atualização de taxa de operação
-     * @param promptService Serviço de prompt para exibição
-     */
     @Override
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Atualizar Taxa de Operação");
     }
 
-    /**
-     * Retorna a lista de opções do menu (vazio para esta ação)
-     * @return Lista vazia de opções
-     */
     @Override
     public List<String> getOptions() {
         return Collections.emptyList();
     }
 
-    /**
-     * Processa a entrada do usuário para atualizar a taxa de operação
-     * @param promptService Serviço de prompt para entrada e saída
-     * @return Menu de gerenciamento de bancos ou retorna a si mesmo em caso de erro
-     */
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         try {
             String operationType = promptService.readString("Tipo de operação: ");
-            double newRate = promptService.readDouble("Nova taxa de operação (%%): ");
+            
+            Double newRate = promptService.readDouble("Nova taxa de operação (%): ");
+            if (newRate == null) {
+                promptService.printError("Taxa inválida. Digite um número válido.");
+                promptService.readString("Pressione Enter para retornar.");
+                return onComplete.get();
+            }
+
             bankUseCase.updateOperationTax(operationType, newRate);
-            promptService.printInfo("Taxa de operação atualizada com sucesso!");
+            promptService.printSuccess("Taxa de operação atualizada com sucesso!");
         } catch (Exception e) {
-            promptService.printError("Erro ao atualizar taxa de operação." + e.getMessage());
-            return this;
+            promptService.printError("Erro ao atualizar taxa de operação: " + e.getMessage());
         }
 
-        // Aguarda o usuário pressionar Enter para retornar
         promptService.readString("Pressione Enter para retornar.");
-        // Retorna ao menu anterior
-        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase);
+        return onComplete.get();
     }
     
 }

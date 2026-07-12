@@ -1,13 +1,10 @@
 package com.safinance.view.menus;
 
 import com.safinance.core.domain.Asset;
-import com.safinance.core.domain.Market;
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 import java.util.ArrayList;
@@ -19,25 +16,23 @@ import java.util.function.Supplier;
 public class InvestmentMenu implements BaseMenu {
 
     private final User user;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public InvestmentMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
+    public InvestmentMenu(User user, MenuContext ctx) {
         this.user = user;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
 
         registerTransition("1", () -> this, transitions);
         registerTransition("2", () -> this, transitions);
         registerTransition("3", () -> this, transitions);
-        registerTransition("0", () -> new UserMenu(user, accountUseCase, investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("0", () -> new UserMenu(user, ctx), transitions);
     }
 
     @Override
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Área de Investimentos");
-        WalletAccount wallet = investmentUseCase.getWalletAccount(user);
+        WalletAccount wallet = ctx.investmentUseCase().getWalletAccount(user);
 
         if (wallet == null) {
             promptService.printWarning("Nenhuma conta carteira encontrada. Crie uma conta carteira antes de investir.");
@@ -53,7 +48,7 @@ public class InvestmentMenu implements BaseMenu {
                 wallet.getPortfolio().values().forEach(position -> {
                     Asset asset = position.getAsset();
                     promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
-                        asset.getTicker(), position.getQuantity(), investmentUseCase.getAssetPrice(asset.getTicker()), position.getAveragePrice()));
+                        asset.getTicker(), position.getQuantity(), ctx.investmentUseCase().getAssetPrice(asset.getTicker()), position.getAveragePrice()));
                 });
             }
         }
@@ -82,8 +77,7 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        WalletAccount wallet = investmentUseCase.getWalletAccount(user);
-        //TODO: fazer um menu/form intermediario pra selecionar walletAccount (caso o usuario tenha mais de uma wallet account)
+        WalletAccount wallet = ctx.investmentUseCase().getWalletAccount(user);
 
         switch (option) {
             case "1":
@@ -114,14 +108,14 @@ public class InvestmentMenu implements BaseMenu {
 
     private BaseMenu handleBuy(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos disponíveis:");
-        var currentPrices = investmentUseCase.getMarketSnapshot();
-        investmentUseCase.getAvailableAssets().forEach(asset ->
+        var currentPrices = ctx.investmentUseCase().getMarketSnapshot();
+        ctx.investmentUseCase().getAvailableAssets().forEach(asset ->
             promptService.printInfo(String.format("%s - %s | R$ %.2f", asset.getTicker(), asset.getName(), currentPrices.get(asset.getTicker())))
         );
         promptService.printInfo("");
 
         String ticker = promptService.readString("Digite o ticker do ativo que deseja comprar: ").trim();
-        Asset asset = investmentUseCase.findAssetByTicker(ticker);
+        Asset asset = ctx.investmentUseCase().findAssetByTicker(ticker);
         if (asset == null || currentPrices.get(asset.getTicker()) == null) {
             promptService.printError("Ticker inválido ou não disponível.");
             promptService.readString("Pressione Enter para voltar.");
@@ -140,7 +134,7 @@ public class InvestmentMenu implements BaseMenu {
         }
 
         try {
-            WalletAccount updated = investmentUseCase.buyAsset(wallet, asset, quantity, price);
+            WalletAccount updated = ctx.investmentUseCase().buyAsset(wallet, asset, quantity, price);
             promptService.printSuccess(String.format("Compra concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", asset.getTicker(), quantity, price, updated.getBalance()));
         } catch (Exception e) {
             promptService.printError("Erro ao comprar ativo: " + e.getMessage());
@@ -174,9 +168,9 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        double price = investmentUseCase.getAssetPrice(position.getAsset().getTicker());
+        double price = ctx.investmentUseCase().getAssetPrice(position.getAsset().getTicker());
         try {
-            WalletAccount updated = investmentUseCase.sellAsset(wallet, ticker, quantity, price);
+            WalletAccount updated = ctx.investmentUseCase().sellAsset(wallet, ticker, quantity, price);
             promptService.printSuccess(String.format("Venda concluída: %s x %.0f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
         } catch (Exception e) {
             promptService.printError("Erro ao vender ativo: " + e.getMessage());
@@ -196,7 +190,7 @@ public class InvestmentMenu implements BaseMenu {
         promptService.printInfo("Portfólio detalhado:");
         wallet.getPortfolio().values().forEach(position -> {
             Asset asset = position.getAsset();
-            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", asset.getName(), asset.getTicker(), position.getQuantity(), position.getAveragePrice(), investmentUseCase.getAssetPrice(asset.getTicker())));
+            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", asset.getName(), asset.getTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(asset.getTicker())));
         });
         promptService.readString("Pressione Enter para voltar.");
     }

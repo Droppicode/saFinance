@@ -3,33 +3,20 @@ package com.safinance.view.actions;
 import java.time.YearMonth;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
-import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
-import com.safinance.view.menus.ManageBanksMenu;
 
 public class UpdateYieldRateAction implements BaseMenu {
     
-    private final User user;
     private final BankUseCase bankUseCase;
-    private final UserUseCase userUseCase;
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final Supplier<BaseMenu> onComplete;
 
-    public UpdateYieldRateAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
-        this.user = user;
+    public UpdateYieldRateAction(BankUseCase bankUseCase, Supplier<BaseMenu> onComplete) {
         this.bankUseCase = bankUseCase;
-        this.userUseCase = userUseCase;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.onComplete = onComplete;
     }
 
     @Override
@@ -45,18 +32,28 @@ public class UpdateYieldRateAction implements BaseMenu {
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         try {
-            // Lê o mês no formato YYYY-MM
             YearMonth month = promptService.readYearMonth("Mês (YYYY-MM): ");
-            double newRate = promptService.readDouble("Nova taxa de rendimento (%%): ");
+            if (month == null) {
+                promptService.printError("Mês inválido.");
+                promptService.readString("Pressione Enter para retornar.");
+                return onComplete.get();
+            }
+
+            Double newRate = promptService.readDouble("Nova taxa de rendimento (%): ");
+            if (newRate == null) {
+                promptService.printError("Taxa inválida. Digite um número válido.");
+                promptService.readString("Pressione Enter para retornar.");
+                return onComplete.get();
+            }
+
             bankUseCase.updateYieldRate(month, newRate);
-            promptService.printInfo("Taxa de rendimento atualizada com sucesso!");
+            promptService.printSuccess("Taxa de rendimento atualizada com sucesso!");
         } catch (Exception e) {
-            promptService.printError("Erro ao atualizar taxa de rendimento." + e.getMessage());
-            return this;
+            promptService.printError("Erro ao atualizar taxa de rendimento: " + e.getMessage());
         }
 
         promptService.readString("Pressione Enter para retornar.");
-        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase); // Retorna ao menu anterior
+        return onComplete.get();
     }
     
 }

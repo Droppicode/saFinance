@@ -2,53 +2,37 @@ package com.safinance.view.actions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
-import com.safinance.view.menus.AdminMenu;
-import com.safinance.view.menus.UserMenu;
-import com.safinance.view.menus.WelcomeMenu;
 
 /**
- * Menu de login para a aplicação.
+ * Menu de Login.
  */
 public class LoginAction implements BaseMenu {
 
     private final AuthUseCase authUseCase;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final Function<User, BaseMenu> onSuccess;
+    private final Supplier<BaseMenu> onFail;
 
-    // Construtor da classe.
-    public LoginAction(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
+    public LoginAction(AuthUseCase authUseCase, Function<User, BaseMenu> onSuccess, Supplier<BaseMenu> onFail) {
         this.authUseCase = authUseCase;
-        this.userUseCase = userUseCase;
-        this.bankUseCase = bankUseCase;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.onSuccess = onSuccess;
+        this.onFail = onFail;
     }
 
-    /**
-     * Exibe o menu de login e retorna o próximo estado.
-     */
     @Override
     public void renderHeader(PromptService promptService) {
-        promptService.printHeader("Fazer Login (Use email 'teste' para logar com admin)");
+        promptService.printHeader("Login");
     }
 
     @Override
     public List<String> getOptions() {
-        return Collections.emptyList(); // Sem autocomplete para email/senha
+        return Collections.emptyList();
     }
 
     @Override
@@ -56,25 +40,22 @@ public class LoginAction implements BaseMenu {
         String email = promptService.readString("Email: ");
         String password = promptService.readString("Senha: ");
 
-        try { 
-            if (email.equals("teste")) { // Temporário para teste de funções
-                User loggedIn = authUseCase.login("admin@safinance.com", "123456");
-                return new AdminMenu(loggedIn, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
+        try {
+            if (email.equalsIgnoreCase("teste")) {
+                email = "admin@safinance.com";
+                password = "123456";
+                promptService.printInfo("Atalho de teste utilizado. Logando como Admin...");
             }
 
-            if (email.isEmpty() || password.isEmpty()) {
-                throw new IllegalArgumentException("Email e senha não podem ser vazios.");
-            }
-            User user = authUseCase.login(email, password);
-            if (user.isAdmin()) {
-                return new AdminMenu(user, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
-            } else {
-                return new UserMenu(user, accountUseCase, investmentUseCase, transactionUseCase);
-            }
-        } catch (IllegalArgumentException e) {
-            promptService.printError("Erro: " + e.getMessage());
-            promptService.readString("Pressione Enter para tentar novamente.");
-            return new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase); // Volta ao ínicio se errar
+            User loggedIn = authUseCase.login(email, password);
+            promptService.printSuccess("Login realizado com sucesso! Bem-vindo(a), " + loggedIn.getName() + ".");
+            promptService.readString("Pressione Enter para continuar.");
+
+            return onSuccess.apply(loggedIn);
+        } catch (Exception e) {
+            promptService.printError("Credenciais inválidas: " + e.getMessage());
+            promptService.readString("Pressione Enter para voltar ao menu inicial.");
+            return onFail.get();
         }
     }
 }

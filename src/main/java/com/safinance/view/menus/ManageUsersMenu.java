@@ -8,12 +8,8 @@ import java.util.function.Supplier;
 
 import com.safinance.core.domain.Role;
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 import com.safinance.view.actions.RegisterAction;
 
@@ -23,11 +19,7 @@ import com.safinance.view.actions.RegisterAction;
 public class ManageUsersMenu implements BaseMenu {
 
     private final User user;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
     
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
@@ -35,23 +27,16 @@ public class ManageUsersMenu implements BaseMenu {
      * Construtor do menu de gerenciamento de usuários.
      *
      * @param user O usuário logado
-     * @param bankUseCase O caso de uso para operações com bancos
-     * @param userUseCase O caso de uso para operações com usuários
-     * @param accountUseCase O caso de uso para operações com contas
+     * @param ctx O contexto com todas as dependências de caso de uso
      */
-    public ManageUsersMenu(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
+    public ManageUsersMenu(User user, MenuContext ctx) {
         this.user = user;
-        this.bankUseCase = bankUseCase;
-        this.userUseCase = userUseCase;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
 
         // Registra as opções do menu e as transições correspondentes.
-        registerTransition("1", () -> new RegisterAction(user, null, userUseCase, null, accountUseCase, investmentUseCase, transactionUseCase), transitions);
-        registerTransition("2", () -> new UserSelectionMenu(user, bankUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase), transitions);
-        registerTransition("0", () -> new AdminMenu(user, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase), transitions);
-
+        registerTransition("1", () -> new RegisterAction(user, ctx.userUseCase(), () -> this), transitions);
+        registerTransition("2", () -> new UserSelectionMenu(user, ctx), transitions);
+        registerTransition("0", () -> new AdminMenu(user, ctx), transitions);
     }
 
     /**
@@ -71,7 +56,7 @@ public class ManageUsersMenu implements BaseMenu {
         promptService.printHeader("Gerenciar Usuários");
         promptService.printInfo("Usuários disponíveis:\n");
 
-        var users = userUseCase.getAllUsers();
+        var users = ctx.userUseCase().getAllUsers();
         if (users.isEmpty()) {
             promptService.printWarning("Nenhum usuário encontrado.");
         } else {

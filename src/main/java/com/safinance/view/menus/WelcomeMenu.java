@@ -1,59 +1,45 @@
 package com.safinance.view.menus;
 
-import com.safinance.view.BaseMenu;
-import com.safinance.view.PromptService;
-import com.safinance.view.actions.LoginAction;
-import com.safinance.view.actions.RegisterAction;
-
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.AuthUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.UserUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.AuthUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.UserUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 import com.safinance.view.actions.LoginAction;
 import com.safinance.view.actions.RegisterAction;
-
+import com.safinance.view.menus.AdminMenu;
+import com.safinance.view.menus.UserMenu;
 /**
  * Menu inicial (Boas-vindas) da aplicação.
  * Responsável por rotear para o Login ou Registro.
  */
 public class WelcomeMenu implements BaseMenu {
 
-    private final AuthUseCase authUseCase;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
-    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
-        this.authUseCase = authUseCase;
-        this.userUseCase = userUseCase;
-        this.bankUseCase = bankUseCase;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+
+    public WelcomeMenu(MenuContext ctx) {
+        this.ctx = ctx;
 
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
-        registerTransition("1", () -> new LoginAction(this.authUseCase, this.userUseCase, this.bankUseCase, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
-        registerTransition("2", () -> new RegisterAction(null, this.authUseCase, this.userUseCase, this.bankUseCase, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("1", () -> new LoginAction(
+            ctx.authUseCase(),
+            loggedIn -> {
+                switch (loggedIn.getRole()) {
+                    case ADMIN: return new AdminMenu(loggedIn, ctx);
+                    case REGULAR: return new UserMenu(loggedIn, ctx);
+                    default: return new AdminMenu(loggedIn, ctx);
+                }
+            },
+            () -> this
+        ), transitions);
+
+        registerTransition("2", () -> new RegisterAction(null, ctx.userUseCase(), () -> this), transitions);
         registerTransition("0", () -> null, transitions);
     }
 

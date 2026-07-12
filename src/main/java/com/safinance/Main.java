@@ -47,6 +47,7 @@ import com.safinance.infra.persistence.LocalDateTimeAdapter;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.infra.persistence.Repository;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.WelcomeMenu;
 
@@ -93,7 +94,7 @@ public class Main {
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
         if (userRepository.findById("admin@safinance.com") == null) {
-            userRepository.save(new RegularUser("admin@safinance.com", "Admin", "admin@safinance.com", "123456"));
+            userRepository.save(new AdminUser("admin@safinance.com", "Admin", "admin@safinance.com", "123456"));
         }
 
         // 3. INJEÇÃO DE DEPENDÊNCIA:
@@ -136,7 +137,8 @@ public class Main {
             try {
                 dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
             } catch (Exception ignore) {}
-            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
+            MenuContext ctx = new MenuContext(authUseCase, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
+            BaseMenu currentState = new WelcomeMenu(ctx);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {
