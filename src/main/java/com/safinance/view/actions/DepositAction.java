@@ -107,7 +107,7 @@ public class DepositAction implements BaseMenu {
 
         for (Account account : accounts) {
             String shortId = account.getId().length() > 5 ? account.getId().substring(0, 5) : account.getId();
-            promptService.printInfo(String.format("%s (ID: %s) | Saldo: R$ %.2f", account.getClass().getSimpleName(), shortId, account.getBalance()));
+            promptService.printInfo(String.format("%s (ID: %s) | Saldo: R$ %.2f", account.getAccountType(), shortId, account.getBalance()));
         }
 
         promptService.printInfo("");

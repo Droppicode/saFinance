@@ -102,7 +102,7 @@ public class AccountUseCase {
      */
     public List<Account> listUserAccounts(User user) {
         return accountRepository.findAll().stream()
-            .filter(account -> account.getOwnerId().equals(user.getId()))
+            .filter(account -> account.isOwnedBy(user.getId()))
             .toList();
     }
 

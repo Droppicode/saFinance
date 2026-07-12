@@ -135,7 +135,7 @@ public class TransactionUseCase {
         Account sourceAccount = findAccount(sourceAccountId);
         Account destinationAccount = findAccount(destinationAccountId);
 
-        if (!sourceAccount.getOwnerId().equals(destinationAccount.getOwnerId())) {
+        if (!sourceAccount.isOwnedBySameUserAs(destinationAccount)) {
             throw new InvalidTransactionException("Transfers are only allowed between accounts owned by the same user.");
         }
 

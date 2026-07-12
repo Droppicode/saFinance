@@ -10,6 +10,16 @@ package com.safinance.core.domain;
  */
 public interface Account extends Entity {
     String getOwnerId();
+    
+    /** Verifica se a conta pertence a um determinado usuário (evita train wrecks). */
+    default boolean isOwnedBy(String ownerId) {
+        return getOwnerId() != null && getOwnerId().equals(ownerId);
+    }
+    
+    /** Verifica se duas contas pertencem ao mesmo usuário. */
+    default boolean isOwnedBySameUserAs(Account other) {
+        return other != null && this.isOwnedBy(other.getOwnerId());
+    }
     double getBalance();
     
     /** Retorna o tipo de conta amigável (ex: "Poupança"). Evita uso de getClass().getSimpleName(). */
