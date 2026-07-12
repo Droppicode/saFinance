@@ -25,6 +25,12 @@ public final class AssetMarket {
     /** Duração de um bloco/tick de mercado, em segundos. */
     private static final int BLOCK_SECONDS = 10;
 
+    /** Instante do último movimento de preços; base do catch-up e da persistência. */
+    private static volatile Instant lastMove = Instant.now();
+
+    /** Callback disparado após cada movimento de preços (ex: persistir o estado). */
+    private static volatile Runnable onMove;
+
     private static final List<Asset> AVAILABLE_ASSETS = List.of(
         new Stock("FTX1", "FTX1", "Fictitious Tech", "Ficticious Tech Co."),
         new Stock("VRPX", "VRPX", "Vertex Dynamics", "Vertex Dynamics & Cia."),
@@ -107,12 +113,13 @@ public final class AssetMarket {
      * uma variação aleatória composta escalada pela volatilidade de cada ativo.
      * Use no refresh ao vivo: cada tick visível na tela = uma chamada.
      */
-    public static void advanceOneBlock() {
+    public static synchronized void advanceOneBlock() {
         for (var ticker : CURRENT_PRICES.keySet()) {
             double current = CURRENT_PRICES.get(ticker);
             double volatility = PRICE_VOLATILITY.getOrDefault(ticker, 0.1);
             CURRENT_PRICES.put(ticker, round2(stepOnce(current, volatility)));
         }
+        registerMove(Instant.now());
     }
 
     /**
@@ -123,12 +130,65 @@ public final class AssetMarket {
      *
      * @param blocks número de blocos de 10s decorridos (valores <= 0 são ignorados)
      */
-    public static void catchUp(long blocks) {
+    public static synchronized void catchUp(long blocks) {
         if (blocks <= 0) return;
         for (var ticker : CURRENT_PRICES.keySet()) {
             double current = CURRENT_PRICES.get(ticker);
             double volatility = PRICE_VOLATILITY.getOrDefault(ticker, 0.1);
             CURRENT_PRICES.put(ticker, round2(stepScaled(current, volatility, blocks)));
+        }
+        // Avança o marco pelos blocos aplicados, preservando o resto do bloco
+        // parcial para o próximo catch-up.
+        registerMove(lastMove.plusSeconds(blocks * BLOCK_SECONDS));
+    }
+
+    /**
+     * Aplica de uma vez os blocos de 10s decorridos desde o último movimento.
+     * Chame ao (re)abrir uma tela que exibe preços: cobre o tempo passado em
+     * outras telas e, com o estado restaurado via {@link #restoreState}, também
+     * o tempo com o aplicativo fechado. Sem bloco completo decorrido, não faz nada.
+     */
+    public static synchronized void catchUpToNow() {
+        catchUp(blocksBetween(lastMove, Instant.now()));
+    }
+
+    /**
+     * Restaura preços e instante do último movimento (ex: carregados do disco).
+     * Tickers desconhecidos são ignorados; os ausentes mantêm o preço corrente.
+     */
+    public static synchronized void restoreState(Map<String, Double> prices, Instant lastMoveInstant) {
+        if (prices != null) {
+            for (var entry : prices.entrySet()) {
+                if (entry.getValue() != null && CURRENT_PRICES.containsKey(entry.getKey())) {
+                    CURRENT_PRICES.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        if (lastMoveInstant != null) {
+            lastMove = lastMoveInstant;
+        }
+    }
+
+    /** Instante do último movimento de preços. */
+    public static Instant lastMoveInstant() {
+        return lastMove;
+    }
+
+    /** Registra um callback executado após cada movimento de preços (ex: salvar em disco). */
+    public static void setOnMove(Runnable callback) {
+        onMove = callback;
+    }
+
+    /** Atualiza o marco do último movimento e notifica o callback de persistência. */
+    private static void registerMove(Instant instant) {
+        lastMove = instant;
+        Runnable callback = onMove;
+        if (callback != null) {
+            try {
+                callback.run();
+            } catch (Exception ignored) {
+                // Falha ao persistir não pode derrubar o mercado.
+            }
         }
     }
 
@@ -171,7 +231,7 @@ public final class AssetMarket {
      *
      * @return mapa de ticker -> preço (imutável)
      */
-    public static Map<String, Double> snapshotPrices() {
+    public static synchronized Map<String, Double> snapshotPrices() {
         return Map.copyOf(CURRENT_PRICES);
     }
 

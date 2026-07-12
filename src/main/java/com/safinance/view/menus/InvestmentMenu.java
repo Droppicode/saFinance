@@ -36,6 +36,9 @@ public class InvestmentMenu implements BaseMenu {
 
     @Override
     public void renderHeader(PromptService promptService) {
+        // Aplica os blocos de 10s decorridos fora desta tela (ou com o app
+        // fechado); sem isso os preços ficam congelados entre uma visita e outra.
+        AssetMarket.catchUpToNow();
         promptService.printHeader("Área de Investimentos");
         WalletAccount wallet = investmentUseCase.getWalletAccount(user);
 

@@ -92,6 +92,4 @@ public class InvestmentUseCase {
                 position.getAsset().getTicker(), position.getQuantity(), position.getAveragePrice(), position.getAveragePrice()))
             .toList();
     }
-
-    //TODO: refresh a cada 5 ou 10s; persistencia de ultimo valor dos assets (qnd eu saí da tela de investimentos) e cálculo do novo valor (volatilidade x quantidade de blocos de 10s passados desde o ultimo fechamento). atualização da tela em tempo de execução a cada vez que o refresh é feito.
 }

@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.safinance.core.domain.Account;
 import com.safinance.core.domain.AdminUser;
 import com.safinance.core.domain.Asset;
+import com.safinance.core.domain.AssetMarket;
 import com.safinance.core.domain.CreditAccount;
 import com.safinance.core.domain.FixedIncome;
 import com.safinance.core.domain.RealEstateFund;
@@ -20,6 +21,7 @@ import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.LocalDateTimeAdapter;
+import com.safinance.infra.persistence.MarketStateRepository;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
 import com.safinance.infra.persistence.Repository;
 import com.safinance.view.BaseMenu;
@@ -83,6 +85,17 @@ public class Main {
         Repository<Account, String> accountRepository = new JsonlRepository<>("data/accounts.jsonl", Account.class, gson);
         Repository<Transaction, String> transactionRepository = new JsonlRepository<>("data/transactions.jsonl", Transaction.class, gson);
         Bank bank = new Bank(YearMonth.now(), 0.005);
+
+        // Estado do mercado simulado: restaura preços e último movimento da execução
+        // anterior e persiste a cada novo movimento. O tempo decorrido com o app
+        // fechado é aplicado via catch-up quando a tela de investimentos abre.
+        MarketStateRepository marketStateRepository = new MarketStateRepository("data/market.json", gson);
+        MarketStateRepository.MarketState marketState = marketStateRepository.load();
+        if (marketState != null) {
+            AssetMarket.restoreState(marketState.getPrices(), marketState.getLastMove());
+        }
+        AssetMarket.setOnMove(() ->
+            marketStateRepository.save(AssetMarket.snapshotPrices(), AssetMarket.lastMoveInstant()));
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
         if (userRepository.findById("admin@safinance.com") == null) {
