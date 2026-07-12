@@ -1,19 +1,19 @@
 package com.safinance.view.menus;
 
-import com.safinance.view.BaseMenu;
-import com.safinance.view.PromptService;
-import com.safinance.view.actions.LoginAction;
-import com.safinance.view.actions.RegisterAction;
-
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.AuthUseCase;
-import com.safinance.core.usecases.UserUseCase;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.AuthUseCase;
+import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.UserUseCase;
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+import com.safinance.view.actions.LoginAction;
+import com.safinance.view.actions.RegisterAction;
 
 /**
  * Menu inicial (Boas-vindas) da aplicação.
@@ -23,18 +23,20 @@ public class WelcomeMenu implements BaseMenu {
 
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
+    private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
+        this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
 
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
-        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, accountUseCase), transitions);
-        registerTransition("2", () -> new RegisterAction(authUseCase, userUseCase, accountUseCase), transitions);
+        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, bankUseCase, accountUseCase), transitions);
+        registerTransition("2", () -> new RegisterAction(null, authUseCase, userUseCase, bankUseCase, accountUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 
