@@ -53,7 +53,7 @@ public class InvestmentUseCase {
         }
         newPortfolio.put(asset.getTicker(), position);
 
-        WalletAccount updated = new WalletAccount(wallet.getId(), wallet.getOwnerId(), wallet.getBalance() - totalCost, newPortfolio);
+        WalletAccount updated = wallet.withPortfolio(newPortfolio).withBalance(wallet.getBalance() - totalCost);
         accountRepository.save(updated);
         AssetMarket.refreshPricesAfterOperation();
         return updated;
@@ -79,7 +79,7 @@ public class InvestmentUseCase {
         }
 
         double proceeds = quantity * pricePerUnit;
-        WalletAccount updated = new WalletAccount(wallet.getId(), wallet.getOwnerId(), wallet.getBalance() + proceeds, newPortfolio);
+        WalletAccount updated = new WalletAccount(wallet.getId(), wallet.getOwnerId(), wallet.getBalance() + proceeds, newPortfolio, wallet.getName());
         accountRepository.save(updated);
         AssetMarket.refreshPricesAfterOperation();
         return updated;

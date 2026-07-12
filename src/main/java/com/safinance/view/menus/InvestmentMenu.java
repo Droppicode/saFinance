@@ -6,6 +6,7 @@ import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 
@@ -19,16 +20,18 @@ public class InvestmentMenu implements BaseMenu {
 
     private final User user;
     private final InvestmentUseCase investmentUseCase;
+    private final TransactionUseCase transactionUseCase;
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public InvestmentMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
+    public InvestmentMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.investmentUseCase = investmentUseCase;
+        this.transactionUseCase = transactionUseCase;
 
         registerTransition("1", () -> this, transitions);
         registerTransition("2", () -> this, transitions);
         registerTransition("3", () -> this, transitions);
-        registerTransition("0", () -> new UserMenu(user, accountUseCase, investmentUseCase), transitions);
+        registerTransition("0", () -> new UserMenu(user, accountUseCase, investmentUseCase, this.transactionUseCase), transitions);
     }
 
     @Override

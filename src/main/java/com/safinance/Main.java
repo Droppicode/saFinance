@@ -26,6 +26,11 @@ import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.WelcomeMenu;
 import java.time.LocalDateTime;
+import com.safinance.core.domain.Transaction;
+import com.safinance.core.domain.IncomeTransaction;
+import com.safinance.core.domain.ExpenseTransaction;
+import com.safinance.core.domain.TransactionFactory;
+import com.safinance.core.usecases.TransactionUseCase;
 import java.time.YearMonth;
 
 import org.jline.reader.Candidate;
@@ -38,9 +43,11 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import java.util.List;
+import java.util.Locale;
 
 public class Main {
     public static void main(String[] args) {
+        Locale.setDefault(new Locale("pt", "BR"));
         System.out.println("Iniciando ObjectFinance...\n");
 
         // 1. Inicializa dependências globais de utilidade (Gson com ensinamento para Interfaces)
@@ -57,12 +64,16 @@ public class Main {
             .registerSubtype(Stock.class)
             .registerSubtype(RealEstateFund.class)
             .registerSubtype(FixedIncome.class);
+        PolymorphicTypeAdapterFactory<Transaction> transactionAdapterFactory = PolymorphicTypeAdapterFactory.of(Transaction.class)
+            .registerSubtype(IncomeTransaction.class)
+            .registerSubtype(ExpenseTransaction.class);
 
         Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .registerTypeAdapterFactory(userAdapterFactory)
             .registerTypeAdapterFactory(accountAdapterFactory)
             .registerTypeAdapterFactory(assetAdapterFactory)
+            .registerTypeAdapterFactory(transactionAdapterFactory)
             .create();
 
         // 2. Cria a Infraestrutura (Onde instanciamos a implementação CONCRETA)
@@ -70,6 +81,7 @@ public class Main {
         // mas injetamos nela a implementação real (JsonlRepository).
         Repository<User, String> userRepository = new JsonlRepository<>("data/users.jsonl", User.class, gson);
         Repository<Account, String> accountRepository = new JsonlRepository<>("data/accounts.jsonl", Account.class, gson);
+        Repository<Transaction, String> transactionRepository = new JsonlRepository<>("data/transactions.jsonl", Transaction.class, gson);
         Bank bank = new Bank(YearMonth.now(), 0.005);
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
@@ -83,6 +95,9 @@ public class Main {
         UserUseCase userUseCase = new UserUseCase(userRepository);
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
         InvestmentUseCase investmentUseCase = new InvestmentUseCase(accountRepository);
+
+        TransactionFactory transactionFactory = new TransactionFactory();
+        TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory, bank);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
         try {
@@ -112,7 +127,7 @@ public class Main {
                 dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
             } catch (Exception ignore) {}
             
-            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase, investmentUseCase);
+            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {

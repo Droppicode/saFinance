@@ -3,12 +3,10 @@ package com.safinance.view.menus;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 
-import com.safinance.core.domain.WalletAccount;
-import com.safinance.core.domain.CreditAccount;
-import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,18 +19,20 @@ public class ManageAccountsMenu implements BaseMenu {
     private final User user;
     private final AccountUseCase accountUseCase;
     private final InvestmentUseCase investmentUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public ManageAccountsMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
+    public ManageAccountsMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
         this.investmentUseCase = investmentUseCase;
+        this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new CreateAccountMenu(user, accountUseCase, investmentUseCase), transitions);
-        registerTransition("2", () -> this, transitions);
+        registerTransition("1", () -> new CreateAccountMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("2", () -> new TransactionMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
         registerTransition("3", () -> this, transitions);
-        registerTransition("0", () -> new UserMenu(user, accountUseCase, investmentUseCase), transitions);
+        registerTransition("0", () -> new UserMenu(user, accountUseCase, investmentUseCase, transactionUseCase), transitions);
     }
 
     @Override
@@ -45,18 +45,10 @@ public class ManageAccountsMenu implements BaseMenu {
         if (accounts.isEmpty()) {
             promptService.printWarning("Nenhuma conta encontrada para este usuário.");
         } else {
-            promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Tipo", "Saldo", "Limite"));
-            promptService.printInfo("---------------------------------------------");
+            promptService.printInfo(String.format("%-15s | %-12s | %-10s | %-10s", "Nome", "Tipo", "Saldo", "Limite"));
+            promptService.printInfo("---------------------------------------------------------");
             for (var account : accounts) {
-                if (account instanceof SavingsAccount sa) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10s", "Poupança", sa.getBalance(), "-"));
-                } else if (account instanceof WalletAccount wa) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10s", "Carteira", wa.getBalance(), "-"));
-                } else if (account instanceof CreditAccount ca) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10.2f", "Crédito", ca.getBalance(), ca.getCreditLimit()));
-                } else {
-                    promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Desconhecida", "-", "-"));
-                }
+                promptService.printInfo(account.getDisplaySummary());
             }
         }
 
@@ -87,7 +79,7 @@ public class ManageAccountsMenu implements BaseMenu {
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
-            if (option.equals("2") || option.equals("3")) {
+            if (option.equals("3")) {
                 promptService.printWarning("Em desenvolvimento: Funcionalidade ainda não implementada.");
                 promptService.readString("Pressione Enter para tentar novamente.");
             }

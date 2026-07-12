@@ -9,6 +9,8 @@ import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.core.usecases.UserUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,18 +28,20 @@ public class WelcomeMenu implements BaseMenu {
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
     private final InvestmentUseCase investmentUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
+    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
         this.investmentUseCase = investmentUseCase;
+        this.transactionUseCase = transactionUseCase;
 
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
-        registerTransition("1", () -> new LoginAction(this.authUseCase, this.userUseCase, this.accountUseCase, this.investmentUseCase), transitions);
-        registerTransition("2", () -> new RegisterAction(this.authUseCase, this.userUseCase, this.accountUseCase, this.investmentUseCase), transitions);
+        registerTransition("1", () -> new LoginAction(this.authUseCase, this.userUseCase, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("2", () -> new RegisterAction(this.authUseCase, this.userUseCase, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 

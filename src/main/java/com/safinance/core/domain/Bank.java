@@ -39,8 +39,11 @@ public class Bank {
     /** Operation types mapped to the strategy that computes their fee. */
     private final Map<String, TaxStrategy> operationStrategies = new HashMap<>();
 
-    /** Default fee rate charged on transfers (business rule, 1%). */
-    private static final double DEFAULT_TRANSFER_RATE = 0.01;
+    /** Default fee rate charged on TED transfers (temporary, 2%). */
+    private static final double DEFAULT_TRANSFER_RATE = 0.02;
+
+    /** Total fees collected by the bank. */
+    private double collectedFees = 0.0;
 
     /**
      * Creates the bank anchored at a starting month and its rate.
@@ -57,7 +60,26 @@ public class Bank {
 
         // Register the default operation-fee strategies. Operation types that are
         // not registered here fall through to a tax-exempt strategy in operationCost().
-        this.operationStrategies.put("TRANSFER", new StandardTax(DEFAULT_TRANSFER_RATE));
+        this.operationStrategies.put("TED", new StandardTax(DEFAULT_TRANSFER_RATE));
+        this.operationStrategies.put("PIX", new ExemptTax());
+    }
+
+    /**
+     * Collects a fee value to the bank's revenue.
+     *
+     * @param amount the fee amount to be collected
+     */
+    public void collectFee(double amount) {
+        if (amount < 0) throw new IllegalArgumentException("Fee amount cannot be negative.");
+        this.collectedFees += amount;
+    }
+
+    /**
+     * Returns the total fees collected by the bank.
+     * @return the total collected fees
+     */
+    public double getCollectedFees() {
+        return collectedFees;
     }
 
     /**

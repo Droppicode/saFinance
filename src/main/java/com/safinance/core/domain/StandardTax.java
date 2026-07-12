@@ -1,6 +1,6 @@
 package com.safinance.core.domain;
 
-public class StandardTax implements TaxStrategy {
+public final class StandardTax implements TaxStrategy {
     private double rate;
 
     public StandardTax(double rate) {

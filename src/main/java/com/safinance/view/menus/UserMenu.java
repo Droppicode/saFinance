@@ -6,6 +6,7 @@ import com.safinance.view.PromptService;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class UserMenu implements BaseMenu {
     private final User user;    
     private final AccountUseCase accountUseCase;
     private final InvestmentUseCase investmentUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
@@ -30,14 +32,15 @@ public class UserMenu implements BaseMenu {
      * @param accountUseCase A instância do caso de uso de contas.
      * @param investmentUseCase A instância do caso de uso de investimentos.
      */
-    public UserMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
+    public UserMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
         this.investmentUseCase = investmentUseCase;
+        this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new ManageAccountsMenu(this.user, this.accountUseCase, this.investmentUseCase), transitions);
-        registerTransition("2", () -> this, transitions);
-        registerTransition("3", () -> new InvestmentMenu(this.user, this.accountUseCase, this.investmentUseCase), transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("2", () -> new ReportMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase, this), transitions);
+        registerTransition("3", () -> new InvestmentMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 
