@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.safinance.core.exception.InvalidTransactionException;
+import com.safinance.core.exception.InsufficientFundsException;
+
 /**
  * Conta corrente/carteira principal do usuário.
  * Armazena o saldo disponível e o portfólio de investimentos.
@@ -18,6 +21,8 @@ public class WalletAccount implements Account {
     public WalletAccount(String id, String ownerId, double balance, Map<String, AssetPosition> portfolio) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
+        if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
+        if (balance < 0) throw new IllegalArgumentException("O saldo inicial da Wallet não pode ser negativo.");
         
         this.id = id;
         this.ownerId = ownerId;
@@ -39,13 +44,29 @@ public class WalletAccount implements Account {
 
     @Override
     public WalletAccount process(Transaction t) {
+        validateTransaction(t);
+
         double newBalance = this.balance + t.getAmount();
         
+        if (!Double.isFinite(newBalance)) {
+            throw new InvalidTransactionException("The resulting balance must be finite.");
+        }
+
         if (newBalance < 0) {
-            throw new IllegalArgumentException("Saldo insuficiente na Wallet.");
+            throw new InsufficientFundsException("Insufficient balance in WalletAccount.");
         }
         
         return new WalletAccount(this.id, this.ownerId, newBalance, this.portfolio);
+    }
+
+    private void validateTransaction(Transaction t) {
+        if (t == null) {
+            throw new InvalidTransactionException("Transaction cannot be null.");
+        }
+
+        if (!this.id.equals(t.getAccountId())) {
+            throw new InvalidTransactionException("Transaction does not belong to this account.");
+        }
     }
 
     /**

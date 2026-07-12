@@ -1,0 +1,182 @@
+package com.safinance.core.usecases;
+
+import com.safinance.core.domain.Account;
+import com.safinance.core.domain.Transaction;
+import com.safinance.core.domain.TransactionFactory;
+import com.safinance.core.domain.TransferType;
+import com.safinance.core.domain.tax.TaxStrategy;
+import com.safinance.core.exception.InvalidTransactionException;
+import com.safinance.infra.persistence.Repository;
+
+/**
+ * Coordinates transaction operations between domain objects and repositories.
+ */
+public class TransactionUseCase {
+
+    private final Repository<Account, String> accountRepository;
+    private final Repository<Transaction, String> transactionRepository;
+    private final TransactionFactory transactionFactory;
+
+    public TransactionUseCase(
+            Repository<Account, String> accountRepository,
+            Repository<Transaction, String> transactionRepository,
+            TransactionFactory transactionFactory
+    ) {
+        if (accountRepository == null) {
+            throw new IllegalArgumentException("Account repository cannot be null.");
+        }
+
+        if (transactionRepository == null) {
+            throw new IllegalArgumentException("Transaction repository cannot be null.");
+        }
+
+        if (transactionFactory == null) {
+            throw new IllegalArgumentException("Transaction factory cannot be null.");
+        }
+
+        this.accountRepository = accountRepository;
+        this.transactionRepository = transactionRepository;
+        this.transactionFactory = transactionFactory;
+    }
+
+    /**
+     * Deposits money into an account.
+     *
+     * @param accountId account that will receive the money
+     * @param amount amount to deposit
+     * @param description transaction description
+     * @return the updated account
+     */
+    public Account deposit(String accountId, double amount, String description) {
+        Account account = findAccount(accountId);
+
+        Transaction transaction = transactionFactory.createIncome(amount, description, accountId);
+
+        Account updatedAccount = account.process(transaction);
+
+        accountRepository.save(updatedAccount);
+        transactionRepository.save(transaction);
+
+        return updatedAccount;
+    }
+
+    /**
+     * Withdraws money from an account.
+     *
+     * @param accountId account from which the money will be withdrawn
+     * @param amount amount to withdraw
+     * @param description transaction description
+     * @return the updated account
+     */
+    public Account withdraw(String accountId, double amount, String description) {
+        Account account = findAccount(accountId);
+
+        Transaction transaction = transactionFactory.createExpense(amount, description, accountId);
+
+        Account updatedAccount = account.process(transaction);
+
+        accountRepository.save(updatedAccount);
+        transactionRepository.save(transaction);
+
+        return updatedAccount;
+    }
+
+    /**
+     * Transfers money between two accounts owned by the same user.
+     *
+     * The source account is charged the transferred amount plus the tax.
+     * The destination account receives only the transferred amount.
+     *
+     * @param sourceAccountId source account identifier
+     * @param destinationAccountId destination account identifier
+     * @param amount amount to transfer
+     * @param transferType selected transfer type
+     * @param taxStrategy strategy used to calculate the transaction tax
+     */
+    public void transfer(
+            String sourceAccountId,
+            String destinationAccountId,
+            double amount,
+            TransferType transferType,
+            TaxStrategy taxStrategy
+    ) {
+        validateAccountId(sourceAccountId, "Source");
+        validateAccountId(destinationAccountId, "Destination");
+
+        if (sourceAccountId.equals(destinationAccountId)) {
+            throw new InvalidTransactionException("Source and destination accounts must be different.");
+        }
+
+        validateAmount(amount);
+
+        if (transferType == null) {
+            throw new InvalidTransactionException("Transfer type cannot be null.");
+        }
+
+        if (taxStrategy == null) {
+            throw new InvalidTransactionException("Tax strategy cannot be null.");
+        }
+
+        Account sourceAccount = findAccount(sourceAccountId);
+        Account destinationAccount = findAccount(destinationAccountId);
+
+        if (!sourceAccount.getOwnerId().equals(destinationAccount.getOwnerId())) {
+            throw new InvalidTransactionException("Transfers are only allowed between accounts owned by the same user.");
+        }
+
+        double tax = taxStrategy.calculateTax(amount);
+
+        if (!Double.isFinite(tax) || tax < 0) {
+            throw new InvalidTransactionException("Calculated tax must be finite and non-negative.");
+        }
+
+        double totalDebit = amount + tax;
+
+        if (!Double.isFinite(totalDebit)) {
+            throw new InvalidTransactionException("Total debit exceeds the supported numeric range.");
+        }
+
+        String description =
+                "Transfer " + transferType
+                        + " from account " + sourceAccountId
+                        + " to account " + destinationAccountId;
+
+        Transaction expenseTransaction = transactionFactory.createExpense(totalDebit, description, sourceAccountId);
+
+        Transaction incomeTransaction = transactionFactory.createIncome(amount, description, destinationAccountId);
+
+        Account updatedSourceAccount = sourceAccount.process(expenseTransaction);
+
+        Account updatedDestinationAccount = destinationAccount.process(incomeTransaction);
+
+        accountRepository.save(updatedSourceAccount);
+        accountRepository.save(updatedDestinationAccount);
+
+        transactionRepository.save(expenseTransaction);
+        transactionRepository.save(incomeTransaction);
+    }
+
+    private Account findAccount(String accountId) {
+        validateAccountId(accountId, "Account");
+
+        Account account = accountRepository.findById(accountId);
+
+        if (account == null) {
+            throw new InvalidTransactionException("Account not found: " + accountId);
+        }
+
+        return account;
+    }
+
+    private static void validateAccountId(String accountId, String accountLabel) {
+        if (accountId == null || accountId.isBlank()) {
+            throw new InvalidTransactionException(accountLabel + " account ID cannot be null or blank.");
+        }
+    }
+
+    private static void validateAmount(double amount) {
+        if (!Double.isFinite(amount) || amount <= 0) {
+            throw new InvalidTransactionException("Transaction amount must be finite and greater than zero.");
+        }
+    }
+}
