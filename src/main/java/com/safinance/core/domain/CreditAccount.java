@@ -17,6 +17,7 @@ public class CreditAccount implements Account {
     public CreditAccount(String id, String ownerId, double balance, double creditLimit, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("O nome da conta não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
         if (!Double.isFinite(creditLimit) || creditLimit < 0) throw new IllegalArgumentException("O limite de crédito deve ser finito e não negativo.");
         if (balance < -creditLimit) throw new IllegalArgumentException("O saldo inicial não pode ultrapassar o limite de crédito.");

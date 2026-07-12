@@ -22,6 +22,7 @@ public class WalletAccount implements Account {
     public WalletAccount(String id, String ownerId, double balance, Map<String, AssetPosition> portfolio, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("O nome da conta não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
         if (balance < 0) throw new IllegalArgumentException("O saldo inicial da Wallet não pode ser negativo.");
         
@@ -84,13 +85,13 @@ public class WalletAccount implements Account {
 
         switch (t) {
             case BuyAssetTransaction buyTx -> {
-                var position = newPortfolio.get(buyTx.getAsset().getTicker());
+                var position = newPortfolio.get(buyTx.getAssetTicker());
                 if (position == null) {
                     position = new AssetPosition(buyTx.getAsset(), buyTx.getQuantity(), buyTx.getPricePerUnit(), t.getDate());
                 } else {
                     position = position.updatePosition(buyTx.getQuantity(), buyTx.getPricePerUnit());
                 }
-                newPortfolio.put(buyTx.getAsset().getTicker(), position);
+                newPortfolio.put(buyTx.getAssetTicker(), position);
             }
             case SellAssetTransaction sellTx -> {
                 var position = newPortfolio.get(sellTx.getTicker());

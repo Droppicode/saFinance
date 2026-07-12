@@ -13,7 +13,9 @@ public class RegularUser implements User {
 
     public RegularUser(String id, String name, String email, String passwordHash) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID não pode ser nulo ou vazio.");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("O nome não pode ser nulo ou vazio.");
         if (email == null || email.isBlank()) throw new IllegalArgumentException("O e-mail não pode ser nulo.");
+        if (passwordHash == null || passwordHash.isBlank()) throw new IllegalArgumentException("A senha não pode ser nula ou vazia.");
         
         this.id = id;
         this.name = name;

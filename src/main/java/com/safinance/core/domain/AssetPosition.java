@@ -27,6 +27,14 @@ public class AssetPosition {
         return asset;
     }
 
+    public String getAssetTicker() {
+        return asset.getTicker();
+    }
+
+    public String getAssetName() {
+        return asset.getName();
+    }
+
     public double getQuantity() {
         return quantity;
     }

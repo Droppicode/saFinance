@@ -30,6 +30,8 @@ public class AccountUseCase {
      * @param bank Banco responsável por calcular rendimentos.
      */
     public AccountUseCase(Repository<Account, String> accountRepository, Bank bank) {
+        if (accountRepository == null) throw new IllegalArgumentException("O repositório de contas não pode ser nulo.");
+        if (bank == null) throw new IllegalArgumentException("O banco não pode ser nulo.");
         this.accountRepository = accountRepository;
         this.bank = bank;
     }

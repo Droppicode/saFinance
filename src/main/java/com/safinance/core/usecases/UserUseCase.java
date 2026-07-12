@@ -20,6 +20,7 @@ public class UserUseCase {
      * Injeção de Dependência via Construtor.
      */
     public UserUseCase(Repository<User, String> userRepository) {
+        if (userRepository == null) throw new IllegalArgumentException("O repositório de usuários não pode ser nulo.");
         this.userRepository = userRepository;
     }
 

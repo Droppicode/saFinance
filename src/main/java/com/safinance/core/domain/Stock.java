@@ -5,6 +5,7 @@ public class Stock extends BaseAsset {
 
     public Stock(String id, String ticker, String name, String companyName, double volatility) {
         super(id, ticker, name, volatility);
+        if (companyName == null || companyName.isBlank()) throw new IllegalArgumentException("O nome da empresa não pode ser nulo ou vazio.");
         this.companyName = companyName;
     }
 

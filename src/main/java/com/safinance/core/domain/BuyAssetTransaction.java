@@ -52,6 +52,8 @@ public class BuyAssetTransaction implements Transaction {
     public boolean isTransfer() { return false; }
 
     public Asset getAsset() { return asset; }
+    public String getAssetTicker() { return asset.getTicker(); }
+    public String getAssetName() { return asset.getName(); }
     public double getQuantity() { return quantity; }
     public double getPricePerUnit() { return pricePerUnit; }
 }

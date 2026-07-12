@@ -8,6 +8,7 @@ public class BankUseCase {
     private final Bank bank;
 
     public BankUseCase(Bank bank) {
+        if (bank == null) throw new IllegalArgumentException("O banco não pode ser nulo.");
         this.bank = bank;
     }
 

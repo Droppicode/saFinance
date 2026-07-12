@@ -46,9 +46,8 @@ public class InvestmentMenu implements BaseMenu {
                 promptService.printInfo("  - Nenhuma posição no momento.");
             } else {
                 wallet.getPortfolio().values().forEach(position -> {
-                    Asset asset = position.getAsset();
                     promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
-                        asset.getTicker(), position.getQuantity(), ctx.investmentUseCase().getAssetPrice(asset.getTicker()), position.getAveragePrice()));
+                        position.getAssetTicker(), position.getQuantity(), ctx.investmentUseCase().getAssetPrice(position.getAssetTicker()), position.getAveragePrice()));
                 });
             }
         }
@@ -147,7 +146,7 @@ public class InvestmentMenu implements BaseMenu {
     private BaseMenu handleSell(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos no portfólio:");
         wallet.getPortfolio().values().forEach(position ->
-            promptService.printInfo(String.format("  - %s: %.0f unidades", position.getAsset().getTicker(), position.getQuantity())));
+            promptService.printInfo(String.format("  - %s: %.0f unidades", position.getAssetTicker(), position.getQuantity())));
         promptService.printInfo("");
 
         String ticker = promptService.readString("Digite o ticker do ativo que deseja vender: ").trim();
@@ -168,7 +167,7 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        double price = ctx.investmentUseCase().getAssetPrice(position.getAsset().getTicker());
+        double price = ctx.investmentUseCase().getAssetPrice(position.getAssetTicker());
         try {
             WalletAccount updated = ctx.investmentUseCase().sellAsset(wallet, ticker, quantity, price);
             promptService.printSuccess(String.format("Venda concluída: %s x %.0f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
@@ -189,8 +188,7 @@ public class InvestmentMenu implements BaseMenu {
 
         promptService.printInfo("Portfólio detalhado:");
         wallet.getPortfolio().values().forEach(position -> {
-            Asset asset = position.getAsset();
-            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", asset.getName(), asset.getTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(asset.getTicker())));
+            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(position.getAssetTicker())));
         });
         promptService.readString("Pressione Enter para voltar.");
     }

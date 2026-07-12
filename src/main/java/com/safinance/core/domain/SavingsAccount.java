@@ -19,6 +19,7 @@ public class SavingsAccount implements Account {
     public SavingsAccount(String id, String ownerId, double balance, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("O nome da conta não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
         if (balance < 0) throw new IllegalArgumentException("O saldo inicial da poupança não pode ser negativo.");
         

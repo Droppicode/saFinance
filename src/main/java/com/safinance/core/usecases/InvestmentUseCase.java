@@ -23,6 +23,10 @@ public class InvestmentUseCase {
     private final Market market;
 
     public InvestmentUseCase(Repository<Account, String> accountRepository, Repository<Transaction, String> transactionRepository, TransactionFactory transactionFactory, Market market) {
+        if (accountRepository == null) throw new IllegalArgumentException("O repositório de contas não pode ser nulo.");
+        if (transactionRepository == null) throw new IllegalArgumentException("O repositório de transações não pode ser nulo.");
+        if (transactionFactory == null) throw new IllegalArgumentException("A fábrica de transações não pode ser nula.");
+        if (market == null) throw new IllegalArgumentException("O mercado não pode ser nulo.");
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.transactionFactory = transactionFactory;
