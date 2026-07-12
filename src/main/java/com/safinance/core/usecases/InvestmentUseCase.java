@@ -70,10 +70,7 @@ public class InvestmentUseCase {
 
     public List<String> getPortfolioSummary(WalletAccount wallet) {
         if (wallet == null) return List.of();
-        return wallet.getPortfolio().values().stream()
-            .map(position -> String.format("%s x %.4f @ R$ %.2f (Preço Médio: R$ %.2f)",
-                position.getAsset().getTicker(), position.getQuantity(), position.getAveragePrice(), position.getAveragePrice()))
-            .toList();
+        return wallet.getPortfolioSummary();
     }
 
     public List<Asset> getAvailableAssets() {

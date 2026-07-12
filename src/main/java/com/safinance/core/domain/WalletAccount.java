@@ -57,6 +57,15 @@ public class WalletAccount implements Account {
         return portfolio == null ? Collections.emptyMap() : portfolio;
     }
 
+    /**
+     * Retorna a representação do portfólio já formatada, mantendo o encapsulamento (Tell, Don't Ask).
+     */
+    public java.util.List<String> getPortfolioSummary() {
+        return getPortfolio().values().stream()
+                .map(AssetPosition::getDisplaySummary)
+                .toList();
+    }
+
     @Override
     public WalletAccount process(Transaction t) {
         validateTransaction(t);
@@ -73,24 +82,30 @@ public class WalletAccount implements Account {
         
         Map<String, AssetPosition> newPortfolio = new HashMap<>(getPortfolio());
 
-        if (t instanceof BuyAssetTransaction buyTx) {
-            var position = newPortfolio.get(buyTx.getAsset().getTicker());
-            if (position == null) {
-                position = new AssetPosition(buyTx.getAsset(), buyTx.getQuantity(), buyTx.getPricePerUnit(), t.getDate());
-            } else {
-                position = position.updatePosition(buyTx.getQuantity(), buyTx.getPricePerUnit());
+        switch (t) {
+            case BuyAssetTransaction buyTx -> {
+                var position = newPortfolio.get(buyTx.getAsset().getTicker());
+                if (position == null) {
+                    position = new AssetPosition(buyTx.getAsset(), buyTx.getQuantity(), buyTx.getPricePerUnit(), t.getDate());
+                } else {
+                    position = position.updatePosition(buyTx.getQuantity(), buyTx.getPricePerUnit());
+                }
+                newPortfolio.put(buyTx.getAsset().getTicker(), position);
             }
-            newPortfolio.put(buyTx.getAsset().getTicker(), position);
-        } else if (t instanceof SellAssetTransaction sellTx) {
-            var position = newPortfolio.get(sellTx.getTicker());
-            if (position == null) {
-                throw new InvalidTransactionException("Ativo não encontrado no portfólio.");
+            case SellAssetTransaction sellTx -> {
+                var position = newPortfolio.get(sellTx.getTicker());
+                if (position == null) {
+                    throw new InvalidTransactionException("Ativo não encontrado no portfólio.");
+                }
+                AssetPosition updatedPosition = position.reducePosition(sellTx.getQuantity());
+                if (updatedPosition == null) {
+                    newPortfolio.remove(sellTx.getTicker());
+                } else {
+                    newPortfolio.put(sellTx.getTicker(), updatedPosition);
+                }
             }
-            AssetPosition updatedPosition = position.reducePosition(sellTx.getQuantity());
-            if (updatedPosition == null) {
-                newPortfolio.remove(sellTx.getTicker());
-            } else {
-                newPortfolio.put(sellTx.getTicker(), updatedPosition);
+            default -> {
+                // Outras transações não afetam o portfólio diretamente (apenas o saldo)
             }
         }
         
