@@ -75,7 +75,19 @@ public class InvestmentUseCase {
             .toList();
     }
 
-    public Market getMarket() {
-        return market;
+    public List<Asset> getAvailableAssets() {
+        return market.availableAssets();
+    }
+
+    public Map<String, Double> getMarketSnapshot() {
+        return market.snapshotPrices();
+    }
+
+    public Asset findAssetByTicker(String ticker) {
+        return market.findByTicker(ticker);
+    }
+
+    public Double getAssetPrice(String ticker) {
+        return market.priceFor(ticker);
     }
 }
