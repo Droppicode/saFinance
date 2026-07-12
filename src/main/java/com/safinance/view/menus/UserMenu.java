@@ -5,6 +5,7 @@ import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ public class UserMenu implements BaseMenu {
 
     private final User user;    
     private final AccountUseCase accountUseCase;
+    private final InvestmentUseCase investmentUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
@@ -26,14 +28,16 @@ public class UserMenu implements BaseMenu {
      * Construtor da classe.
      * @param user O usuário logado.
      * @param accountUseCase A instância do caso de uso de contas.
+     * @param investmentUseCase A instância do caso de uso de investimentos.
      */
-    public UserMenu(User user, AccountUseCase accountUseCase) {
+    public UserMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+        this.investmentUseCase = investmentUseCase;
 
-        registerTransition("1", () -> new ManageAccountsMenu(user, accountUseCase), transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(user, accountUseCase, investmentUseCase), transitions);
         registerTransition("2", () -> this, transitions);
-        registerTransition("3", () -> this, transitions);
+        registerTransition("3", () -> new InvestmentMenu(user, accountUseCase, investmentUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 
@@ -64,9 +68,6 @@ public class UserMenu implements BaseMenu {
         if (transition != null) {
             if (option.equals("0")) {
                 promptService.printSuccess("Encerrando sessão. Até logo!");
-            } else if (option.equals("2") || option.equals("3")) {
-                promptService.printWarning("Em desenvolvimento: Funcionalidade ainda não implementada.");
-                promptService.readString("Pressione Enter para tentar novamente.");
             }
             return transition.get();
         } else {
