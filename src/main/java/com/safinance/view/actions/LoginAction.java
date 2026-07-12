@@ -9,6 +9,7 @@ import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.UserUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 
 import java.util.List;
 import java.util.Collections;
@@ -21,12 +22,14 @@ public class LoginAction implements BaseMenu {
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     // Construtor da classe.
-    public LoginAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public LoginAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
     }
 
     /**
@@ -50,7 +53,7 @@ public class LoginAction implements BaseMenu {
         try { 
             if (email.equals("teste")) { // Temporário para teste de funções
                 User loggedIn = authUseCase.login("admin@safinance.com", "123456");
-                return new UserMenu(loggedIn, accountUseCase);
+                return new UserMenu(loggedIn, accountUseCase, transactionUseCase);
             }
 
             if (email.isEmpty() || password.isEmpty()) {
@@ -60,14 +63,14 @@ public class LoginAction implements BaseMenu {
             if (user.isAdmin()) {
                 promptService.printWarning("Em desenvolvimento: Menu de Admin ainda não implementado.");
                 promptService.readString("pressione Enter para tentar novamente.");
-                return new WelcomeMenu(authUseCase, userUseCase, accountUseCase);
+                return new WelcomeMenu(authUseCase, userUseCase, accountUseCase, transactionUseCase);
             } else {
-                return new UserMenu(user, accountUseCase);
+                return new UserMenu(user, accountUseCase, transactionUseCase);
             }
         } catch (IllegalArgumentException e) {
             promptService.printError("Erro: " + e.getMessage());
             promptService.readString("Pressione Enter para tentar novamente.");
-            return new WelcomeMenu(authUseCase, userUseCase, accountUseCase); // Volta ao ínicio se errar
+            return new WelcomeMenu(authUseCase, userUseCase, accountUseCase, transactionUseCase); // Volta ao ínicio se errar
         }
     }
 }

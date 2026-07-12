@@ -8,6 +8,7 @@ import com.safinance.core.domain.Role;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.UserUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,11 +21,13 @@ public class RegisterAction implements BaseMenu {
     private final AuthUseCase authUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
-    public RegisterAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase) {
+    public RegisterAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
     }
 
     @Override
@@ -54,6 +57,6 @@ public class RegisterAction implements BaseMenu {
         }
         
         promptService.readString("Pressione Enter para retornar ao menu principal.");
-        return new WelcomeMenu(authUseCase, userUseCase, accountUseCase);
+        return new WelcomeMenu(authUseCase, userUseCase, accountUseCase, transactionUseCase);
     }
 }

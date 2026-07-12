@@ -2,3 +2,8 @@
 {"id":"798e6663-7928-4cf6-9127-cbbf6adb083e","ownerId":"admin@safinance.com","balance":0.0,"type":"SavingsAccount"}
 {"type":"WalletAccount","id":"30788ef6-e311-4564-8de0-50b7fdfee359","ownerId":"marcos@teste.com","balance":0.0,"portfolio":{}}
 {"type":"CreditAccount","id":"126ff8b7-c719-436d-91af-8e10cde97418","ownerId":"admin@safinance.com","balance":0.0,"creditLimit":1000.0}
+{"type":"WalletAccount","id":"8470e6c0-044f-48b7-a2ab-f34414a959fa","ownerId":"admin@safinance.com","balance":1500.5,"portfolio":{}}
+{"type":"WalletAccount","id":"8470e6c0-044f-48b7-a2ab-f34414a959fa","ownerId":"admin@safinance.com","balance":990.5,"portfolio":{}}
+{"type":"SavingsAccount","id":"798e6663-7928-4cf6-9127-cbbf6adb083e","ownerId":"admin@safinance.com","balance":500.0}
+{"type":"WalletAccount","id":"8470e6c0-044f-48b7-a2ab-f34414a959fa","ownerId":"admin@safinance.com","balance":890.5,"portfolio":{}}
+{"type":"CreditAccount","id":"126ff8b7-c719-436d-91af-8e10cde97418","ownerId":"admin@safinance.com","balance":100.0,"creditLimit":1000.0}

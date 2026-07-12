@@ -5,6 +5,7 @@ import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ public class UserMenu implements BaseMenu {
 
     private final User user;    
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
@@ -27,11 +29,12 @@ public class UserMenu implements BaseMenu {
      * @param user O usuário logado.
      * @param accountUseCase A instância do caso de uso de contas.
      */
-    public UserMenu(User user, AccountUseCase accountUseCase) {
+    public UserMenu(User user, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new ManageAccountsMenu(user, accountUseCase), transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(user, accountUseCase, transactionUseCase), transitions);
         registerTransition("2", () -> this, transitions);
         registerTransition("3", () -> this, transitions);
         registerTransition("0", () -> null, transitions);
