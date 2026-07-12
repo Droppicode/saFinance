@@ -2,10 +2,9 @@ package com.safinance.core.usecases;
 
 import java.util.List;
 
-import com.safinance.core.domain.AdminUser;
-import com.safinance.core.domain.RegularUser;
 import com.safinance.core.domain.Role;
 import com.safinance.core.domain.User;
+import com.safinance.core.domain.UserFactory;
 import com.safinance.infra.persistence.Repository;
 
 /**
@@ -39,16 +38,10 @@ public class UserUseCase {
      * @return O usuário criado.
      */
     public User createUser(String name, String email, String password, Role role) {
-        // Uso direto da dependência, sem acessar Singletons globais.
-        if (role == Role.ADMIN) {
-            User adminUser = new AdminUser(email, name, email, password);
-            userRepository.save(adminUser);
-            return adminUser;
-        } else {
-            User regularUser = new RegularUser(email, name, email, password);
-            userRepository.save(regularUser);
-            return regularUser;
-        }
+        // Gênese isolada via Factory Pattern
+        User user = UserFactory.createUser(role, email, name, email, password);
+        userRepository.save(user);
+        return user;
     }
 
     /**

@@ -36,10 +36,11 @@ public class InvestmentUseCase {
     }
 
     public WalletAccount getWalletAccount(User user) {
+        // Usa o polimorfismo paramétrico para evitar instanceof
         return accountRepository.findAll().stream()
-            .filter(account -> account instanceof WalletAccount)
-            .map(account -> (WalletAccount) account)
-            .filter(account -> account.getOwnerId().equals(user.getId()))
+            .filter(account -> account.isOwnedBy(user.getId()))
+            .filter(WalletAccount.class::isInstance)
+            .map(WalletAccount.class::cast)
             .findFirst()
             .orElse(null);
     }

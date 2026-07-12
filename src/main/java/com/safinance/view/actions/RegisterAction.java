@@ -54,7 +54,9 @@ public class RegisterAction implements BaseMenu {
             if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 throw new IllegalArgumentException("Todos os campos são obrigatórios.");
             }
+            
             userUseCase.createUser(name, email, password, role);
+            
             String message = "Conta criada com sucesso!";
             if (user == null || user.getRole() != Role.ADMIN) {
                 message += " Faça login para continuar.";

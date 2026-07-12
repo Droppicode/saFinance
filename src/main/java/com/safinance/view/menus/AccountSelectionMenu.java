@@ -45,11 +45,7 @@ public class AccountSelectionMenu implements BaseMenu {
         promptService.printHeader("Selecionar Conta de Poupança");
         promptService.printInfo("");
 
-        List<Account> accounts = ctx.accountUseCase().listUserAccounts(accountOwner);
-        List<SavingsAccount> savingsAccounts = accounts.stream()
-                .filter(account -> account instanceof SavingsAccount)
-                .map(account -> (SavingsAccount) account)
-                .toList();
+        List<SavingsAccount> savingsAccounts = ctx.accountUseCase().listUserAccountsOfType(accountOwner, SavingsAccount.class);
         if (savingsAccounts.isEmpty()) {
             promptService.printWarning("Nenhuma conta de poupança encontrada.\n");
             return;
@@ -83,11 +79,7 @@ public class AccountSelectionMenu implements BaseMenu {
             return new ManageAccountsMenu(user, accountOwner, ctx);
         }
 
-        List<Account> accounts = ctx.accountUseCase().listUserAccounts(accountOwner);
-        List<SavingsAccount> savingsAccounts = accounts.stream()
-                .filter(account -> account instanceof SavingsAccount)
-                .map(account -> (SavingsAccount) account)
-                .toList();
+        List<SavingsAccount> savingsAccounts = ctx.accountUseCase().listUserAccountsOfType(accountOwner, SavingsAccount.class);
 
         try {
             int index = Integer.parseInt(option) - 1;

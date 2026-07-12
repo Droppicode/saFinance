@@ -116,13 +116,29 @@ public class AccountUseCase {
     }
 
     /**
+     * Lista contas de um usuário filtrando por um tipo específico (Generics),
+     * evitando o uso de instanceof e casts na camada de visualização.
+     * @param user O usuário cujas contas serão listadas.
+     * @param type A classe do tipo da conta desejada.
+     * @return Uma lista tipada de contas.
+     */
+    public <T extends Account> List<T> listUserAccountsOfType(User user, Class<T> type) {
+        return listUserAccounts(user).stream()
+            .filter(type::isInstance)
+            .map(type::cast)
+            .toList();
+    }
+
+    /**
      * Verifica se o usuário já possui uma conta com o mesmo nome.
      */
     private void checkDuplicateName(User user, String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("O nome da conta não pode ser vazio.");
         }
-        if (isNameDuplicated(user, name)) {
+        boolean exists = listUserAccounts(user).stream()
+            .anyMatch(acc -> acc.getName().equalsIgnoreCase(name));
+        if (exists) {
             throw new DuplicateAccountException("Você já possui uma conta com o nome '" + name + "'. Escolha outro nome.");
         }
     }
