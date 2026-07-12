@@ -50,11 +50,24 @@ public class InvestmentMenu implements BaseMenu {
             if (wallet.getPortfolio().isEmpty()) {
                 promptService.printInfo("  - Nenhuma posição no momento.");
             } else {
-                wallet.getPortfolio().values().forEach(position -> {
+                double totalValor = 0;
+                for (var position : wallet.getPortfolio().values()) {
                     Asset asset = position.getAsset();
-                    promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
-                        asset.getTicker(), position.getQuantity(), AssetMarket.priceFor(asset.getTicker()), position.getAveragePrice()));
-                });
+                    double currentPrice = AssetMarket.priceFor(asset.getTicker());
+                    double totalPosition = position.getQuantity() * currentPrice;
+                    double gainLoss = totalPosition - (position.getQuantity() * position.getAveragePrice());
+                    String gainLossStr = gainLoss >= 0 ? "+" : "";
+                    
+                    promptService.printInfo(String.format("  - %s: %.4f unidades | Preço atual R$ %.2f | Valor total R$ %.2f (%s%.2f)",
+                        asset.getTicker(), 
+                        position.getQuantity(), 
+                        currentPrice, 
+                        totalPosition,
+                        gainLossStr,
+                        gainLoss));
+                    totalValor += totalPosition;
+                }
+                promptService.printInfo(String.format("  Valor total do portfólio: R$ %.2f", totalValor));
             }
         }
 
@@ -73,7 +86,53 @@ public class InvestmentMenu implements BaseMenu {
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
-        String option = promptService.readString("> Escolha uma opção: ");
+        String option = promptService.readStringWithRefresh(
+            "> Escolha uma opção: ",
+            10_000L,
+            () -> {
+                try {
+                    AssetMarket.advanceOneBlock();
+                    StringBuilder block = new StringBuilder("\n══════════════════════════════════════════════\n        Área de Investimentos\n══════════════════════════════════════════════");
+                    
+                    WalletAccount wallet = investmentUseCase.getWalletAccount(user);
+                    if (wallet != null) {
+                        block.append("\nSaldo disponível: R$ ").append(String.format("%.2f", wallet.getBalance()));
+                        block.append("\n\nPortfólio atual:");
+                        if (wallet.getPortfolio().isEmpty()) {
+                            block.append("\n  - Nenhuma posição no momento.");
+                        } else {
+                            double totalValor = 0;
+                            for (var position : wallet.getPortfolio().values()) {
+                                Asset asset = position.getAsset();
+                                double currentPrice = AssetMarket.priceFor(asset.getTicker());
+                                double totalPosition = position.getQuantity() * currentPrice;
+                                double gainLoss = totalPosition - (position.getQuantity() * position.getAveragePrice());
+                                String gainLossStr = gainLoss >= 0 ? "+" : "";
+                                
+                                block.append(String.format("\n  - %s: %.4f unidades | Preço atual R$ %.2f | Valor total R$ %.2f (%s%.2f)",
+                                    asset.getTicker(), 
+                                    position.getQuantity(), 
+                                    currentPrice, 
+                                    totalPosition,
+                                    gainLossStr,
+                                    gainLoss));
+                                totalValor += totalPosition;
+                            }
+                            block.append(String.format("\n  Valor total do portfólio: R$ %.2f", totalValor));
+                        }
+                    }
+                    
+                    block.append("\n\n1 - Comprar ativo");
+                    block.append("\n2 - Vender ativo");
+                    block.append("\n3 - Ver portfólio");
+                    block.append("\n0 - Voltar/Sair");
+                    
+                    promptService.printLive(block.toString());
+                } catch (Exception ignored) {
+                    // Um erro pontual no refresh não deve derrubar a thread.
+                }
+            }
+        );
 
         Supplier<BaseMenu> transition = transitions.get(option);
 
