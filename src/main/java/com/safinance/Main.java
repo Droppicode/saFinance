@@ -88,7 +88,7 @@ public class Main {
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
 
         TransactionFactory transactionFactory = new TransactionFactory();
-        TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory);
+        TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory, bank);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
         try {

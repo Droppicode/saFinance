@@ -4,7 +4,7 @@ import com.safinance.core.domain.Account;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.TransferType;
-import com.safinance.core.domain.tax.TaxStrategy;
+import com.safinance.core.domain.Bank;
 import com.safinance.core.exception.InvalidTransactionException;
 import com.safinance.infra.persistence.Repository;
 
@@ -16,11 +16,13 @@ public class TransactionUseCase {
     private final Repository<Account, String> accountRepository;
     private final Repository<Transaction, String> transactionRepository;
     private final TransactionFactory transactionFactory;
+    private final Bank bank;
 
     public TransactionUseCase(
             Repository<Account, String> accountRepository,
             Repository<Transaction, String> transactionRepository,
-            TransactionFactory transactionFactory
+            TransactionFactory transactionFactory,
+            Bank bank
     ) {
         if (accountRepository == null) {
             throw new IllegalArgumentException("Account repository cannot be null.");
@@ -34,9 +36,27 @@ public class TransactionUseCase {
             throw new IllegalArgumentException("Transaction factory cannot be null.");
         }
 
+        if (bank == null) {
+            throw new IllegalArgumentException("Bank cannot be null.");
+        }
+
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.transactionFactory = transactionFactory;
+        this.bank = bank;
+    }
+
+    /**
+     * Previews the tax for a transfer operation.
+     * @param amount amount to transfer
+     * @param transferType selected transfer type
+     * @return the calculated tax
+     */
+    public double previewTransferTax(double amount, TransferType transferType) {
+        if (transferType == null) {
+            throw new InvalidTransactionException("Transfer type cannot be null.");
+        }
+        return bank.operationCost(amount, transferType.name());
     }
 
     /**
@@ -91,14 +111,12 @@ public class TransactionUseCase {
      * @param destinationAccountId destination account identifier
      * @param amount amount to transfer
      * @param transferType selected transfer type
-     * @param taxStrategy strategy used to calculate the transaction tax
      */
     public void transfer(
             String sourceAccountId,
             String destinationAccountId,
             double amount,
-            TransferType transferType,
-            TaxStrategy taxStrategy
+            TransferType transferType
     ) {
         validateAccountId(sourceAccountId, "Source");
         validateAccountId(destinationAccountId, "Destination");
@@ -113,10 +131,6 @@ public class TransactionUseCase {
             throw new InvalidTransactionException("Transfer type cannot be null.");
         }
 
-        if (taxStrategy == null) {
-            throw new InvalidTransactionException("Tax strategy cannot be null.");
-        }
-
         Account sourceAccount = findAccount(sourceAccountId);
         Account destinationAccount = findAccount(destinationAccountId);
 
@@ -124,11 +138,13 @@ public class TransactionUseCase {
             throw new InvalidTransactionException("Transfers are only allowed between accounts owned by the same user.");
         }
 
-        double tax = taxStrategy.calculateTax(amount);
+        double tax = bank.operationCost(amount, transferType.name());
 
         if (!Double.isFinite(tax) || tax < 0) {
             throw new InvalidTransactionException("Calculated tax must be finite and non-negative.");
         }
+
+        bank.collectFee(tax);
 
         double totalDebit = amount + tax;
 

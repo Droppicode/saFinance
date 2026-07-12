@@ -3,9 +3,7 @@ package com.safinance.view.actions;
 import com.safinance.core.domain.Account;
 import com.safinance.core.domain.TransferType;
 import com.safinance.core.domain.User;
-import com.safinance.core.domain.tax.ExemptTax;
-import com.safinance.core.domain.tax.StandardTax;
-import com.safinance.core.domain.tax.TaxStrategy;
+
 import com.safinance.core.exception.InsufficientFundsException;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.TransactionUseCase;
@@ -27,7 +25,7 @@ public class TransferAction implements BaseMenu {
      * Temporary value until Bank becomes responsible for storing
      * and providing transfer tax rates.
      */
-    private static final double TEMPORARY_TED_RATE = 0.02;
+
 
     private final User user;
     private final AccountUseCase accountUseCase;
@@ -36,11 +34,6 @@ public class TransferAction implements BaseMenu {
     private final Map<String, TransferType> transferTypes = Map.of(
             "1", TransferType.PIX,
             "2", TransferType.TED
-    );
-
-    private final Map<TransferType, TaxStrategy> taxStrategies = Map.of(
-            TransferType.PIX, new ExemptTax(),
-            TransferType.TED, new StandardTax(TEMPORARY_TED_RATE)
     );
 
     public TransferAction(User user, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
@@ -121,7 +114,7 @@ public class TransferAction implements BaseMenu {
         promptService.printInfo("");
         promptService.printInfo("Tipos de transferência:");
         promptService.printInfo("1. PIX — sem taxa");
-        promptService.printInfo(String.format("2. TED — taxa temporária de %.2f%%", TEMPORARY_TED_RATE * 100));
+        promptService.printInfo("2. TED — taxa de 2%");
 
         String transferOption = promptService.readString("Escolha o tipo de transferência: ").trim();
 
@@ -134,12 +127,10 @@ public class TransferAction implements BaseMenu {
             return backToManageAccounts();
         }
 
-        TaxStrategy taxStrategy = taxStrategies.get(transferType);
-
-        double tax = taxStrategy.calculateTax(amount);
+        double tax = transactionUseCase.previewTransferTax(amount, transferType);
 
         try {
-            transactionUseCase.transfer(sourceAccountId, destinationAccountId, amount,transferType, taxStrategy);
+            transactionUseCase.transfer(sourceAccountId, destinationAccountId, amount, transferType);
 
             Account updatedSource = accountUseCase.getAccount(sourceAccountId);
 
