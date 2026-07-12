@@ -1,27 +1,38 @@
 package com.safinance;
 
+import java.time.YearMonth;
+import java.util.List;
+
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.ParsedLine;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.safinance.core.domain.Account;
-import com.safinance.core.domain.CreditAccount;
-import com.safinance.core.domain.SavingsAccount;
-import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.AdminUser;
+import com.safinance.core.domain.Bank;
+import com.safinance.core.domain.CreditAccount;
 import com.safinance.core.domain.RegularUser;
+import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
+import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
+import com.safinance.core.usecases.BankUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
-import com.safinance.infra.persistence.Repository;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
+import com.safinance.infra.persistence.Repository;
 import com.safinance.view.BaseMenu;
-import com.safinance.view.menus.WelcomeMenu;
 import com.safinance.view.PromptService;
+
+import com.safinance.view.menus.WelcomeMenu;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.IncomeTransaction;
 import com.safinance.core.domain.ExpenseTransaction;
@@ -87,6 +98,7 @@ public class Main {
         // O núcleo de negócios (UseCase) é instanciado recebendo a infraestrutura pelo construtor.
         AuthUseCase authUseCase = new AuthUseCase(userRepository);
         UserUseCase userUseCase = new UserUseCase(userRepository);
+        BankUseCase bankUseCase = new BankUseCase(bank);
         AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
 
         TransactionFactory transactionFactory = new TransactionFactory();
@@ -119,8 +131,8 @@ public class Main {
             try {
                 dynamicCompleter.getClass().getMethod("setPromptService", PromptService.class).invoke(dynamicCompleter, promptService);
             } catch (Exception ignore) {}
-            
-            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, accountUseCase, transactionUseCase);
+          
+            BaseMenu currentState = new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
             
             // Loop principal da aplicação (State Machine)
             while (currentState != null) {

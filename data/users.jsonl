@@ -1,2 +1,3 @@
-{"type":"RegularUser","id":"admin@safinance.com","name":"Admin","email":"admin@safinance.com","passwordHash":"123456"}
+{"type":"AdminUser","id":"admin@safinance.com","name":"Admin","email":"admin@safinance.com","passwordHash":"123456"}
 {"type":"RegularUser","id":"marcos@teste.com","name":"Marcos","email":"marcos@teste.com","passwordHash":"senhamarcos"}
+{"type":"RegularUser","id":"VMarinheiro@teste.com","name":"Vinicius","email":"VMarinheiro@teste.com","passwordHash":"1234"}

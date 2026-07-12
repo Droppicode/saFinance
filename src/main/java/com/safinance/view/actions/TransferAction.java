@@ -1,22 +1,23 @@
 package com.safinance.view.actions;
 
-import com.safinance.core.domain.Account;
-import com.safinance.core.domain.TransferType;
-import com.safinance.core.domain.User;
-
-import com.safinance.core.exception.InsufficientFundsException;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.view.BaseMenu;
-import com.safinance.view.PromptService;
-import com.safinance.view.menus.ManageAccountsMenu;
-
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
+
+import com.safinance.core.domain.Account;
+import com.safinance.core.domain.TransferType;
+import com.safinance.core.domain.User;
+import com.safinance.core.exception.InsufficientFundsException;
+import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
+import com.safinance.core.usecases.UserUseCase;
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+import com.safinance.view.menus.ManageAccountsMenu;
 
 /**
  * Collects the data required to transfer money between
@@ -31,6 +32,9 @@ public class TransferAction implements BaseMenu {
 
 
     private final User user;
+    private final User accountOwner;
+    private final UserUseCase userUseCase;
+    private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
     private final TransactionUseCase transactionUseCase;
 
@@ -39,8 +43,11 @@ public class TransferAction implements BaseMenu {
             "2", TransferType.TED
     );
 
-    public TransferAction(User user, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public TransferAction(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
+        this.accountOwner = accountOwner;
+        this.userUseCase = userUseCase;
+        this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
         this.transactionUseCase = transactionUseCase;
     }
@@ -57,7 +64,7 @@ public class TransferAction implements BaseMenu {
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
-        List<Account> accounts = accountUseCase.listUserAccounts(user);
+        List<Account> accounts = accountUseCase.listUserAccounts(accountOwner);
 
         if (accounts.size() < 2) {
             promptService.printWarning("Você precisa possuir pelo menos duas contas para realizar uma transferência.");
@@ -188,6 +195,6 @@ public class TransferAction implements BaseMenu {
     }
 
     private BaseMenu backToManageAccounts() {
-        return new ManageAccountsMenu(user, accountUseCase, transactionUseCase);
+        return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
     }
 }
