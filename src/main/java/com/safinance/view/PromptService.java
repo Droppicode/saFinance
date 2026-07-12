@@ -60,6 +60,7 @@ public class PromptService {
      * @param text o texto a imprimir (linhas separadas por {@code \n})
      */
     public void printLive(String text) {
+        clearScreen();
         reader.printAbove(text);
     }
 
