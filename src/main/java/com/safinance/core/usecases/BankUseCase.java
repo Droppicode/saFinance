@@ -1,4 +1,4 @@
-package com.safinance.core.domain;
+package com.safinance.core.usecases;
 
 import java.time.YearMonth;
 import com.safinance.core.domain.Bank;

@@ -37,16 +37,17 @@ classDiagram
         +String getName()
     }
     class Bank {
-        <<Singleton>>
+        <<Single Instance>>
         -Map~YearMonth, Double~ yieldRates
-        -Map~String, Double~ operationTaxes
-        -Map~String, Double~ assetPrices
+        -Map~String, TaxStrategy~ operationStrategies
         +double getYieldRate(YearMonth month)
-        +double getOperationTax(String operation)
-        +double getAssetPrice(String ticker)
         +void setYieldRate(YearMonth month, double rate)
-        -generateRandomYieldRate(YearMonth month) double
+        +double operationCost(double amount, String type)
+        +void setOperationTax(String type, double rate)
+        -double randomRate()
+        -generateMissingRatesUpTo(YearMonth target)
     }
+    note for Bank "Instância única criada no Main e injetada por construtor (NÃO Singleton estático), para evitar estado global mutável. Preços de ativos migram para uma futura entidade Market."
     Entity <|-- User
     Entity <|-- Account
     Entity <|-- Transaction
@@ -172,13 +173,13 @@ classDiagram
     %% ----------------------------------------------------
     class TaxStrategy {
         <<interface>>
-        +double calculateTax(double amount, Bank bank)
+        +double calculateTax(double amount)
     }
     class StandardTax
     class ExemptTax
     TaxStrategy <|.. StandardTax
     TaxStrategy <|.. ExemptTax
-    TaxStrategy ..> Bank : reads tax rates
+    Bank --> TaxStrategy : delegates fee calc
 
     class CapitalGainsTaxStrategy {
         <<interface>>
@@ -250,7 +251,6 @@ classDiagram
     class BankUseCase {
         +updateYieldRate(YearMonth month, double rate)
         +updateOperationTax(String operation, double rate)
-        +updateAssetPrice(String ticker, double newPrice)
     }
     class InvestmentUseCase {
         +void buyAsset(WalletAccount acc, String ticker, double quantity)
