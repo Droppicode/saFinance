@@ -38,6 +38,14 @@ public class WalletAccount implements Account {
     public String getOwnerId() { return ownerId; }
 
     @Override
+    public String getAccountType() { return "Carteira"; }
+
+    @Override
+    public String getDisplaySummary() {
+        return String.format("%-12s | %-10.2f | %-10s", getAccountType(), getBalance(), "-");
+    }
+
+    @Override
     public double getBalance() { return balance; }
 
     public Map<String, AssetPosition> getPortfolio() { return portfolio; }

@@ -30,7 +30,7 @@ public class AccountDetailedStatement extends FinancialStatementTemplate {
         sb.append("==================================================\n");
         sb.append(String.format("Titular: %s\n", user.getName()));
         sb.append(String.format("Conta ID: %s\n", account.getId()));
-        sb.append(String.format("Tipo: %s\n", account.getClass().getSimpleName()));
+        sb.append(String.format("Tipo: %s\n", account.getAccountType()));
         sb.append("--------------------------------------------------");
         return sb.toString();
     }

@@ -35,7 +35,13 @@ public class CreditAccount implements Account {
     @Override
     public double getBalance() { return balance; }
     
-    public double getCreditLimit() { return creditLimit; }
+    @Override
+    public String getAccountType() { return "Crédito"; }
+
+    @Override
+    public String getDisplaySummary() {
+        return String.format("%-12s | %-10.2f | %-10.2f", getAccountType(), getBalance(), getCreditLimit());
+    }
 
     @Override
     public CreditAccount process(Transaction t) {

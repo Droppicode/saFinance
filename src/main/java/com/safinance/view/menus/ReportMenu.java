@@ -80,7 +80,7 @@ public class ReportMenu implements BaseMenu {
         promptService.printInfo("Selecione a conta para o extrato:");
         for (int i = 0; i < accounts.size(); i++) {
             Account acc = accounts.get(i);
-            System.out.printf("%d - %s [%s] (Saldo: R$ %.2f)%n", i + 1, acc.getClass().getSimpleName(), acc.getId(), acc.getBalance());
+            System.out.printf("%d - %s [%s] (Saldo: R$ %.2f)%n", i + 1, acc.getAccountType(), acc.getId(), acc.getBalance());
         }
 
         String input = promptService.readString("> Conta: ");

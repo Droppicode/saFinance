@@ -12,6 +12,15 @@ public interface Account extends Entity {
     String getOwnerId();
     double getBalance();
     
+    /** Retorna o tipo de conta amigável (ex: "Poupança"). Evita uso de getClass().getSimpleName(). */
+    String getAccountType();
+
+    /** 
+     * Retorna o resumo formatado da conta para listagem (Tipo | Saldo | Limite). 
+     * Evita violação de polimorfismo com 'instanceof' nos Menus.
+     */
+    String getDisplaySummary();
+    
     /**
      * Padrão Wither: Processa uma transação e retorna uma NOVA conta com o saldo atualizado.
      * Não altera a conta atual em memória.

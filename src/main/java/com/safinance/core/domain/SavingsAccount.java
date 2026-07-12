@@ -33,7 +33,12 @@ public class SavingsAccount implements Account {
     public String getOwnerId() { return ownerId; }
 
     @Override
-    public double getBalance() { return balance; }
+    public String getAccountType() { return "Poupança"; }
+
+    @Override
+    public String getDisplaySummary() {
+        return String.format("%-12s | %-10.2f | %-10s", getAccountType(), getBalance(), "-");
+    }
 
     @Override
     public SavingsAccount process(Transaction t) {
