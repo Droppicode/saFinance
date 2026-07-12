@@ -35,9 +35,9 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
         - [x] getYieldRate(YearMonth) — retorna a taxa do mês
         - [x] Geração aleatória das taxas dos meses faltantes (ex: pulou do mês 3 pro 7, gera 4,5,6,7)
         - [x] setYieldRate(YearMonth, double) — configuração manual pelo admin
-    - [ ] Taxas de operação (transferência) via Strategy
-        - [ ] Interface TaxStrategy + implementações StandardTax e ExemptTax
-        - [ ] operationCost(double amount, String tipo) no Bank 
+    - [x] Taxas de operação (transferência) via Strategy
+        - [x] Interface TaxStrategy + implementações StandardTax e ExemptTax
+        - [x] operationCost(double amount, String tipo) no Bank 
     - [ ] BankUseCase — orquestra configuração (updateYieldRate, updateOperationTax) com injeção do repositório
     - [ ] Instanciar o Bank no Main e injetar em quem precisa (AccountUseCase; depois TransactionUseCase p/ transferência)
     - [ ] (Opcional) Persistir o estado do Bank (taxas/rendimentos) — bank.jsonl

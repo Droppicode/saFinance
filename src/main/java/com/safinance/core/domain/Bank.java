@@ -124,6 +124,19 @@ public class Bank {
     }
 
     /**
+     * Registers or updates the fee strategy for an operation type, applying a
+     * flat percentage rate. Intended for admin configuration of operation taxes.
+     *
+     * @param type the operation type (e.g. "TRANSFER")
+     * @param rate the flat fee rate to apply (must be non-negative)
+     */
+    public void setOperationTax(String type, double rate) {
+        if (type == null || type.isBlank()) throw new IllegalArgumentException("Operation type cannot be null or blank.");
+        if (rate < 0) throw new IllegalArgumentException("Tax rate cannot be negative.");
+        operationStrategies.put(type, new StandardTax(rate));
+    }
+
+    /**
      * Fills every month from {@code lastKnownMonth + 1} up to {@code target}
      * (inclusive) with a randomly generated rate, then advances the known range.
      */
