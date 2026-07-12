@@ -78,7 +78,7 @@ public class SavingsAccount implements Account {
             throw new IllegalArgumentException("O saldo resultante do rendimento deve ser finito.");
         }
         
-        return new SavingsAccount(this.id, this.ownerId, this.balance + newBalance);
+        return new SavingsAccount(this.id, this.ownerId, newBalance);
     }
 
     private void validateTransaction(Transaction transaction) {

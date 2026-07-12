@@ -8,8 +8,11 @@ import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.ManageAccountsMenu;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Collects the data required to deposit money into one of the user's accounts.
@@ -50,7 +53,8 @@ public class DepositAction implements BaseMenu {
 
         printAccounts(promptService, accounts);
 
-        String accountId = promptService.readString("Digite o ID da conta de destino: ").trim();
+        List<String> validIds = accounts.stream().map(Account::getId).toList();
+        String accountId = promptService.readWithOptions("Digite o ID da conta de destino (pressione TAB): ", validIds).trim();
 
         Account selectedAccount = findUserAccount(accounts, accountId);
 
@@ -67,11 +71,11 @@ public class DepositAction implements BaseMenu {
         try {
             String amountInput = promptService.readString("Valor do depósito: ").trim();
 
-            amount = Double.parseDouble(amountInput.trim().replace(',', '.'));
+            amount = NumberFormat.getInstance(new Locale("pt", "BR")).parse(amountInput).doubleValue();
             if (!Double.isFinite(amount) || amount <= 0) {
-                throw new NumberFormatException();
+                throw new ParseException("Invalid amount", 0);
             }
-        } catch (NumberFormatException exception) {
+        } catch (ParseException exception) {
             promptService.printError("O valor do depósito deve ser um número maior que zero.");
 
             promptService.readString("Pressione Enter para voltar ao menu de contas.");
@@ -102,7 +106,8 @@ public class DepositAction implements BaseMenu {
         promptService.printInfo("Contas disponíveis:");
 
         for (Account account : accounts) {
-            promptService.printInfo(String.format("ID: %s | Saldo: R$ %.2f", account.getId(), account.getBalance()));
+            String shortId = account.getId().length() > 5 ? account.getId().substring(0, 5) : account.getId();
+            promptService.printInfo(String.format("%s (ID: %s) | Saldo: R$ %.2f", account.getClass().getSimpleName(), shortId, account.getBalance()));
         }
 
         promptService.printInfo("");

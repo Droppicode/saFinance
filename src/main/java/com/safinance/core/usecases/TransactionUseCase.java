@@ -6,6 +6,7 @@ import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.TransferType;
 import com.safinance.core.domain.Bank;
 import com.safinance.core.exception.InvalidTransactionException;
+import java.util.List;
 import com.safinance.infra.persistence.Repository;
 
 /**
@@ -165,11 +166,8 @@ public class TransactionUseCase {
 
         Account updatedDestinationAccount = destinationAccount.process(incomeTransaction);
 
-        accountRepository.save(updatedSourceAccount);
-        accountRepository.save(updatedDestinationAccount);
-
-        transactionRepository.save(expenseTransaction);
-        transactionRepository.save(incomeTransaction);
+        accountRepository.saveAll(List.of(updatedSourceAccount, updatedDestinationAccount));
+        transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));
     }
 
     private Account findAccount(String accountId) {

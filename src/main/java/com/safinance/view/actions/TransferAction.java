@@ -11,9 +11,12 @@ import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.ManageAccountsMenu;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * Collects the data required to transfer money between
@@ -65,7 +68,8 @@ public class TransferAction implements BaseMenu {
 
         printAccounts(promptService, accounts);
 
-        String sourceAccountId = promptService.readString("Digite o ID da conta de origem: ").trim();
+        List<String> validIds = accounts.stream().map(Account::getId).toList();
+        String sourceAccountId = promptService.readWithOptions("Digite o ID da conta de origem (pressione TAB): ", validIds).trim();
 
         Account sourceAccount = findUserAccount(accounts, sourceAccountId);
 
@@ -76,7 +80,7 @@ public class TransferAction implements BaseMenu {
             return backToManageAccounts();
         }
 
-        String destinationAccountId = promptService.readString("Digite o ID da conta de destino: ").trim();
+        String destinationAccountId = promptService.readWithOptions("Digite o ID da conta de destino (pressione TAB): ", validIds).trim();
 
         Account destinationAccount = findUserAccount(accounts, destinationAccountId);
 
@@ -99,22 +103,25 @@ public class TransferAction implements BaseMenu {
         try {
             String amountInput = promptService.readString("Valor da transferência: ").trim();
 
-            amount = Double.parseDouble(amountInput.trim().replace(',', '.'));
+            amount = NumberFormat.getInstance(new Locale("pt", "BR")).parse(amountInput).doubleValue();
 
             if (!Double.isFinite(amount) || amount <= 0) {
-                throw new NumberFormatException();
+                throw new ParseException("Invalid amount", 0);
             }
-        } catch (NumberFormatException exception) {
+        } catch (ParseException exception) {
             promptService.printError("O valor da transferência deve ser um número maior que zero.");
 
             waitForReturn(promptService);
             return backToManageAccounts();
         }
 
+        double pixTax = transactionUseCase.previewTransferTax(amount, TransferType.PIX);
+        double tedTax = transactionUseCase.previewTransferTax(amount, TransferType.TED);
+
         promptService.printInfo("");
         promptService.printInfo("Tipos de transferência:");
-        promptService.printInfo("1. PIX — sem taxa");
-        promptService.printInfo("2. TED — taxa de 2%");
+        promptService.printInfo(String.format("1. PIX — taxa cobrada: R$ %.2f", pixTax));
+        promptService.printInfo(String.format("2. TED — taxa cobrada: R$ %.2f", tedTax));
 
         String transferOption = promptService.readString("Escolha o tipo de transferência: ").trim();
 
@@ -161,7 +168,8 @@ public class TransferAction implements BaseMenu {
         promptService.printInfo("Contas disponíveis:");
 
         for (Account account : accounts) {
-            promptService.printInfo(String.format("ID: %s | Saldo: R$ %.2f", account.getId(), account.getBalance()));
+            String shortId = account.getId().length() > 5 ? account.getId().substring(0, 5) : account.getId();
+            promptService.printInfo(String.format("%s (ID: %s) | Saldo: R$ %.2f", account.getClass().getSimpleName(), shortId, account.getBalance()));
         }
 
         promptService.printInfo("");
