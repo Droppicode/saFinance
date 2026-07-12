@@ -28,6 +28,16 @@ Roteiro de tarefas em ordem. Quando pegar uma tarefa, defina as subtarefas de ac
     - [ ] Operações de transação (depósito, retirada, transferência).
     = [ ] Aplicar rendimento em poupança.
 - [ ] Transação, crédito, débito
+    - [ ] Implementar transações de crédito e débito
+    - [ ] Implementar fábrica de transações
+    - [ ] Implementar depósito e retirada
+    - [ ] Implementar transferência entre contas
+    - [ ] Implementar estratégias de taxa de transferência
+    - [ ] Criar exceções de transação
+    - [ ] Criar TransactionUseCase
+    - [ ] Persistir histórico de transações
+    - [ ] Adicionar testes automatizados
+    - [ ] Integrar operações aos menus
 - [ ] Banco
 - [ ] Menu admin
 - Relatórios
