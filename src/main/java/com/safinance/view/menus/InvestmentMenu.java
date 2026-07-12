@@ -196,7 +196,7 @@ public class InvestmentMenu implements BaseMenu {
         promptService.printInfo("Portfólio detalhado:");
         wallet.getPortfolio().values().forEach(position -> {
             Asset asset = position.getAsset();
-            promptService.printInfo(String.format("- %s (%s): %.4f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", asset.getName(), asset.getTicker(), position.getQuantity(), position.getAveragePrice(), AssetMarket.priceFor(asset.getTicker())));
+            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", asset.getName(), asset.getTicker(), position.getQuantity(), position.getAveragePrice(), AssetMarket.priceFor(asset.getTicker())));
         });
         promptService.readString("Pressione Enter para voltar.");
     }
