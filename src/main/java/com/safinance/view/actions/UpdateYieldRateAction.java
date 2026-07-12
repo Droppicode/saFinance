@@ -7,6 +7,7 @@ import java.util.List;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
@@ -19,13 +20,15 @@ public class UpdateYieldRateAction implements BaseMenu {
     private final BankUseCase bankUseCase;
     private final UserUseCase userUseCase;
     private final AccountUseCase accountUseCase;
+    private final InvestmentUseCase investmentUseCase;
     private final TransactionUseCase transactionUseCase;
 
-    public UpdateYieldRateAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public UpdateYieldRateAction(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.bankUseCase = bankUseCase;
         this.userUseCase = userUseCase;
         this.accountUseCase = accountUseCase;
+        this.investmentUseCase = investmentUseCase;
         this.transactionUseCase = transactionUseCase;
     }
 
@@ -53,7 +56,7 @@ public class UpdateYieldRateAction implements BaseMenu {
         }
 
         promptService.readString("Pressione Enter para retornar.");
-        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase); // Retorna ao menu anterior
+        return new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase); // Retorna ao menu anterior
     }
     
 }

@@ -8,6 +8,7 @@ import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.BankUseCase;
+import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
@@ -25,6 +26,7 @@ public class ApplyYieldAction implements BaseMenu {
     private final UserUseCase userUseCase;
     private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
+    private final InvestmentUseCase investmentUseCase;
     private final TransactionUseCase transactionUseCase;
 
     /**
@@ -36,13 +38,14 @@ public class ApplyYieldAction implements BaseMenu {
      * @param bankUseCase A instância do caso de uso de bancos.
      * @param accountUseCase A instância do caso de uso de contas.
      */
-    public ApplyYieldAction(User user, User accountOwner, SavingsAccount sa, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public ApplyYieldAction(User user, User accountOwner, SavingsAccount sa, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountOwner = accountOwner;
         this.sa = sa;
         this.userUseCase = userUseCase;
         this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
+        this.investmentUseCase = investmentUseCase;
         this.transactionUseCase = transactionUseCase;
     }
 
@@ -79,6 +82,6 @@ public class ApplyYieldAction implements BaseMenu {
             promptService.printError("Erro ao aplicar rendimento.");
         }
         promptService.readString("Pressione Enter para retornar.");
-        return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
+        return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
     }
 }

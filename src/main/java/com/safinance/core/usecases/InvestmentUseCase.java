@@ -1,6 +1,7 @@
 package com.safinance.core.usecases;
 
 import java.util.List;
+import java.util.Map;
 
 import com.safinance.core.domain.Account;
 import com.safinance.core.domain.Asset;

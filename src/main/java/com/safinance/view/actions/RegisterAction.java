@@ -78,7 +78,7 @@ public class RegisterAction implements BaseMenu {
         
         promptService.readString("Pressione Enter para retornar.");
         if (user != null && user.getRole() == Role.ADMIN) {
-            return new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase);
+            return new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase);
         }
         return new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase, investmentUseCase, transactionUseCase);
     }

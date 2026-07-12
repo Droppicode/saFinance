@@ -1,7 +1,9 @@
 package com.safinance;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Locale;
 
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -18,21 +20,27 @@ import com.safinance.core.domain.Account;
 import com.safinance.core.domain.AdminUser;
 import com.safinance.core.domain.Asset;
 import com.safinance.core.domain.Bank;
+import com.safinance.core.domain.BuyAssetTransaction;
 import com.safinance.core.domain.CreditAccount;
+import com.safinance.core.domain.ExpenseTransaction;
 import com.safinance.core.domain.FixedIncome;
+import com.safinance.core.domain.IncomeTransaction;
+import com.safinance.core.domain.Market;
 import com.safinance.core.domain.RealEstateFund;
 import com.safinance.core.domain.RegularUser;
 import com.safinance.core.domain.SavingsAccount;
+import com.safinance.core.domain.SellAssetTransaction;
+import com.safinance.core.domain.SimulatedAssetMarket;
 import com.safinance.core.domain.Stock;
+import com.safinance.core.domain.Transaction;
+import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
-import com.safinance.core.domain.Bank;
-import com.safinance.core.domain.Market;
-import com.safinance.core.domain.SimulatedAssetMarket;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.AuthUseCase;
 import com.safinance.core.usecases.BankUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.infra.persistence.JsonlRepository;
 import com.safinance.infra.persistence.LocalDateTimeAdapter;
@@ -41,27 +49,6 @@ import com.safinance.infra.persistence.Repository;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 import com.safinance.view.menus.WelcomeMenu;
-import java.time.LocalDateTime;
-import com.safinance.core.domain.Transaction;
-import com.safinance.core.domain.IncomeTransaction;
-import com.safinance.core.domain.ExpenseTransaction;
-import com.safinance.core.domain.BuyAssetTransaction;
-import com.safinance.core.domain.SellAssetTransaction;
-import com.safinance.core.domain.TransactionFactory;
-import com.safinance.core.usecases.TransactionUseCase;
-import java.time.YearMonth;
-
-import org.jline.reader.Candidate;
-import org.jline.reader.Completer;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.reader.ParsedLine;
-import org.jline.reader.impl.completer.StringsCompleter;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
-
-import java.util.List;
-import java.util.Locale;
 
 public class Main {
     public static void main(String[] args) {
