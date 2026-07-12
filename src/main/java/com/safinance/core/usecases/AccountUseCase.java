@@ -22,13 +22,16 @@ public class AccountUseCase {
     
     // A dependência fica declarada, mas a implementação concreta é desconhecida.
     private final Repository<Account, String> accountRepository;
+    private final Bank bank;
     
     /**
      * Construtor da classe.
      * @param accountRepository Repositório para gerenciar contas.
+     * @param bank Banco responsável por calcular rendimentos.
      */
-    public AccountUseCase(Repository<Account, String> accountRepository) {
+    public AccountUseCase(Repository<Account, String> accountRepository, Bank bank) {
         this.accountRepository = accountRepository;
+        this.bank = bank;
     }
     
     /**
@@ -110,8 +113,7 @@ public class AccountUseCase {
      * @return A conta poupança atualizada após a aplicação do rendimento.
      */
     public SavingsAccount applyYield(SavingsAccount account, YearMonth month) {
-        SavingsAccount updatedAccount = account.applyMonthlyYield(month, new Bank()); 
-        // Bank genérico temporário, você pode injetar uma implementação concreta se necessário
+        SavingsAccount updatedAccount = account.applyMonthlyYield(month, bank);
         accountRepository.save(updatedAccount);
         return updatedAccount;
     }

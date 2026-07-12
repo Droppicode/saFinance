@@ -28,6 +28,8 @@ import com.safinance.core.domain.ExpenseTransaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.infra.persistence.LocalDateTimeAdapter;
+import com.safinance.core.domain.Bank;
+import java.time.YearMonth;
 
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -72,6 +74,7 @@ public class Main {
         Repository<User, String> userRepository = new JsonlRepository<>("data/users.jsonl", User.class, gson);
         Repository<Account, String> accountRepository = new JsonlRepository<>("data/accounts.jsonl", Account.class, gson);
         Repository<Transaction, String> transactionRepository = new JsonlRepository<>("data/transactions.jsonl", Transaction.class, gson);
+        Bank bank = new Bank(YearMonth.now(), 0.005);
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
         if (userRepository.findById("admin@safinance.com") == null) {
@@ -82,7 +85,7 @@ public class Main {
         // O núcleo de negócios (UseCase) é instanciado recebendo a infraestrutura pelo construtor.
         AuthUseCase authUseCase = new AuthUseCase(userRepository);
         UserUseCase userUseCase = new UserUseCase(userRepository);
-        AccountUseCase accountUseCase = new AccountUseCase(accountRepository);
+        AccountUseCase accountUseCase = new AccountUseCase(accountRepository, bank);
 
         TransactionFactory transactionFactory = new TransactionFactory();
         TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory);
