@@ -5,6 +5,7 @@ import java.util.List;
 import com.safinance.core.domain.Role;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.UserFactory;
+import com.safinance.core.exception.DuplicateAccountException;
 import com.safinance.infra.persistence.Repository;
 
 /**
@@ -38,6 +39,9 @@ public class UserUseCase {
      * @return O usuário criado.
      */
     public User createUser(String name, String email, String password, Role role) {
+        if (userRepository.findById(email) != null) {
+            throw new DuplicateAccountException("O e-mail '" + email + "' já está cadastrado no sistema.");
+        }
         // Gênese isolada via Factory Pattern
         User user = UserFactory.createUser(role, email, name, email, password);
         userRepository.save(user);

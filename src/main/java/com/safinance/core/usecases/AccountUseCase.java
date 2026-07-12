@@ -143,16 +143,6 @@ public class AccountUseCase {
         }
     }
 
-    /**
-     * Aplica o rendimento mensal a uma conta poupança.
-     * @param account A conta poupança à qual o rendimento será aplicado.
-     * @param month O mês para o qual o rendimento será calculado.
-     * @return A conta poupança atualizada após a aplicação do rendimento.
-     */
-    public SavingsAccount applyYield(SavingsAccount account, YearMonth month) {
-        SavingsAccount updatedAccount = account.applyMonthlyYield(month, bank);
-        accountRepository.save(updatedAccount);
-        return updatedAccount;
-    }
+
 
 }

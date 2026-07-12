@@ -7,8 +7,10 @@ import com.safinance.core.domain.TransferType;
 import com.safinance.core.domain.Bank;
 import com.safinance.core.exception.InvalidTransactionException;
 import com.safinance.core.exception.AccountNotFoundException;
+import java.time.YearMonth;
 import java.util.List;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.core.domain.SavingsAccount;
 
 /**
  * Coordinates transaction operations between domain objects and repositories.
@@ -169,6 +171,29 @@ public class TransactionUseCase {
 
         accountRepository.saveAll(List.of(updatedSourceAccount, updatedDestinationAccount));
         transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));
+    }
+
+    /**
+     * Aplica o rendimento mensal a uma conta poupança e gera o respectivo registro.
+     * @param account A conta poupança
+     * @param month O mês de referência do rendimento
+     * @return A conta atualizada
+     */
+    public SavingsAccount applyYield(SavingsAccount account, YearMonth month) {
+        if (account == null) throw new IllegalArgumentException("Conta poupança não pode ser nula.");
+        if (month == null) throw new IllegalArgumentException("Mês de rendimento não pode ser nulo.");
+        
+        double yieldAmount = account.calculateYieldAmount(month, bank);
+        
+        String description = "Rendimento mensal (" + month + ")";
+        Transaction yieldTransaction = transactionFactory.createIncome(yieldAmount, description, account.getId(), true);
+        
+        SavingsAccount updatedAccount = account.process(yieldTransaction);
+        
+        accountRepository.save(updatedAccount);
+        transactionRepository.save(yieldTransaction);
+        
+        return updatedAccount;
     }
 
     /**

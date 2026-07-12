@@ -67,9 +67,10 @@ public class SavingsAccount implements Account {
     }
 
     /**
-     * Aplica o rendimento mensal usando os dados da instituição bancária.
+     * Calcula o valor do rendimento mensal usando os dados da instituição bancária.
+     * @return O valor do rendimento gerado no mês.
      */
-    public SavingsAccount applyMonthlyYield(YearMonth month, Bank bank) {
+    public double calculateYieldAmount(YearMonth month, Bank bank) {
 
         if (month == null) {
             throw new IllegalArgumentException("O mês não pode ser nulo.");
@@ -86,13 +87,12 @@ public class SavingsAccount implements Account {
         }
 
         double yieldAmount = this.balance * rate;
-        double newBalance = this.balance + yieldAmount;
 
-        if (!Double.isFinite(newBalance)) {
-            throw new IllegalArgumentException("O saldo resultante do rendimento deve ser finito.");
+        if (!Double.isFinite(yieldAmount)) {
+            throw new IllegalArgumentException("O valor do rendimento calculado não é finito.");
         }
         
-        return new SavingsAccount(this.id, this.ownerId, newBalance, this.name);
+        return yieldAmount;
     }
 
 }

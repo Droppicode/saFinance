@@ -107,6 +107,14 @@ public class Bank {
         return yieldRates.get(month);
     }
 
+    public YearMonth getLastKnownMonth() {
+        return lastKnownMonth;
+    }
+
+    public YearMonth getInceptionMonth() {
+        return inceptionMonth;
+    }
+
     /**
      * Manually sets (or overrides) the yield rate for a month — e.g. an admin
      * correcting a rate. If the month lies ahead of the known range, the gap is

@@ -19,4 +19,12 @@ public class BankUseCase {
     public void updateOperationTax(String operationType, double newRate) {
         bank.setOperationTax(operationType, newRate);
     }
+
+    public YearMonth getCurrentSimulationMonth() {
+        return bank.getLastKnownMonth();
+    }
+
+    public YearMonth getInceptionMonth() {
+        return bank.getInceptionMonth();
+    }
 }

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.safinance.core.domain.SavingsAccount;
-import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 
@@ -15,12 +15,12 @@ import com.safinance.view.PromptService;
  */
 public class ApplyYieldAction implements BaseMenu {
 
-    private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
     private final SavingsAccount sa;
     private final Supplier<BaseMenu> onComplete;
 
-    public ApplyYieldAction(AccountUseCase accountUseCase, SavingsAccount sa, Supplier<BaseMenu> onComplete) {
-        this.accountUseCase = accountUseCase;
+    public ApplyYieldAction(TransactionUseCase transactionUseCase, SavingsAccount sa, Supplier<BaseMenu> onComplete) {
+        this.transactionUseCase = transactionUseCase;
         this.sa = sa;
         this.onComplete = onComplete;
     }
@@ -45,7 +45,7 @@ public class ApplyYieldAction implements BaseMenu {
                 return onComplete.get();
             }
 
-            accountUseCase.applyYield(this.sa, month);
+            transactionUseCase.applyYield(this.sa, month);
             promptService.printSuccess("Rendimento aplicado com sucesso.");
         } catch (Exception e) {
             promptService.printError("Erro ao aplicar rendimento.");
