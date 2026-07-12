@@ -1,6 +1,9 @@
 package com.safinance.view;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -43,6 +46,46 @@ public class PromptService {
      */
     public String readString(String promptText) {
         return reader.readLine(promptText).trim();
+    }
+
+    /**
+     * Escreve {@code text} no terminal e força o flush imediato. Ao contrário do
+     * {@link #printInfo}, garante que a saída apareça na hora mesmo vinda de uma
+     * thread de segundo plano (ex: o refresh de cotações) — inclusive no console
+     * da IDE, onde recursos de terminal "de verdade" não funcionam.
+     *
+     * @param text o texto a imprimir
+     */
+    public void printLive(String text) {
+        terminal.writer().println(text);
+        terminal.writer().flush();
+    }
+
+    /**
+     * Lê uma linha do usuário enquanto executa {@code onTick} periodicamente em
+     * segundo plano (ex: avançar e reimprimir as cotações a cada N ms).
+     *
+     * <p>O agendador roda APENAS durante esta leitura e é encerrado assim que o
+     * usuário confirma a entrada. Assim, o restante do fluxo (que lê os preços na
+     * compra/venda) nunca concorre com o refresh.</p>
+     *
+     * @param promptText     rótulo do prompt
+     * @param intervalMillis intervalo entre execuções de {@code onTick}, em ms
+     * @param onTick         ação periódica (tipicamente avança o mercado e imprime via {@link #printLive})
+     * @return a linha digitada, sem espaços nas pontas
+     */
+    public String readStringWithRefresh(String promptText, long intervalMillis, Runnable onTick) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "market-refresh");
+            thread.setDaemon(true);
+            return thread;
+        });
+        try {
+            scheduler.scheduleAtFixedRate(onTick, intervalMillis, intervalMillis, TimeUnit.MILLISECONDS);
+            return reader.readLine(promptText).trim();
+        } finally {
+            scheduler.shutdownNow();
+        }
     }
 
     /**

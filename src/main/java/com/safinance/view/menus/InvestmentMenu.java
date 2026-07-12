@@ -64,6 +64,7 @@ public class InvestmentMenu implements BaseMenu {
             "Vender ativo",
             "Ver portfólio"
         );
+        promptService.printInfo("(As cotações atualizam automaticamente a cada 10s.)");
     }
 
     @Override
@@ -73,7 +74,23 @@ public class InvestmentMenu implements BaseMenu {
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
-        String option = promptService.readString("> Escolha uma opção: ").trim();
+        // Refresh ao vivo: enquanto espera a opção, uma thread em segundo plano
+        // avança o mercado a cada 10s e reimprime as cotações acima do prompt.
+        String option = promptService.readStringWithRefresh(
+            "> Escolha uma opção: ",
+            10_000L,
+            () -> {
+                try {
+                    AssetMarket.advanceOneBlock();
+                    String stamp = java.time.LocalTime.now().withNano(0).toString();
+                    promptService.printLive("── Cotações [" + stamp + "] ──");
+                    AssetMarket.marketSummary().forEach(promptService::printLive);
+                } catch (Exception ignored) {
+                    // Um erro pontual no refresh não deve derrubar a thread.
+                }
+            }
+        );
+
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition == null) {
