@@ -3,6 +3,8 @@ package com.safinance.core.domain;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import com.safinance.core.exception.InvalidTransactionException;
+
 /**
  * Represents an outgoing transaction that decreases an account balance.
  */
@@ -69,7 +71,7 @@ public final class ExpenseTransaction implements Transaction {
 
     private static void validateId(String id) {
         if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidTransactionException(
                     "Transaction ID cannot be null or blank."
             );
         }
@@ -77,7 +79,7 @@ public final class ExpenseTransaction implements Transaction {
 
     private static void validateAmount(double amount) {
         if (!Double.isFinite(amount) || amount <= 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidTransactionException(
                     "Expense transaction amount must be finite and greater than zero."
             );
         }
@@ -85,7 +87,7 @@ public final class ExpenseTransaction implements Transaction {
 
     private static void validateDate(LocalDateTime date) {
         if (date == null) {
-            throw new IllegalArgumentException(
+            throw new InvalidTransactionException(
                     "Transaction date cannot be null."
             );
         }
@@ -93,7 +95,7 @@ public final class ExpenseTransaction implements Transaction {
 
     private static void validateDescription(String description) {
         if (description == null || description.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidTransactionException(
                     "Transaction description cannot be null or blank."
             );
         }
@@ -101,7 +103,7 @@ public final class ExpenseTransaction implements Transaction {
 
     private static void validateAccountId(String accountId) {
         if (accountId == null || accountId.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidTransactionException(
                     "Account ID cannot be null or blank."
             );
         }
