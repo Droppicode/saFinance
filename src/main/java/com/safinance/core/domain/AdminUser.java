@@ -35,8 +35,7 @@ public class AdminUser implements User {
         return Objects.equals(this.passwordHash, password);
     }
 
-    @Override
-    public boolean isAdmin() { return true; }
+
 
     @Override
     public Role getRole() { return Role.ADMIN; }

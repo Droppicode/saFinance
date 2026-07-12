@@ -45,7 +45,7 @@ public class InvestmentUseCase {
         if (pricePerUnit <= 0) throw new IllegalArgumentException("Preço por unidade deve ser maior que zero.");
 
         Transaction tx = transactionFactory.createBuyAsset(asset, quantity, pricePerUnit, wallet.getId());
-        WalletAccount updated = (WalletAccount) wallet.process(tx);
+        WalletAccount updated = wallet.process(tx);
 
         accountRepository.save(updated);
         transactionRepository.save(tx);
@@ -60,7 +60,7 @@ public class InvestmentUseCase {
         if (pricePerUnit <= 0) throw new IllegalArgumentException("Preço por unidade deve ser maior que zero.");
 
         Transaction tx = transactionFactory.createSellAsset(ticker, quantity, pricePerUnit, wallet.getId());
-        WalletAccount updated = (WalletAccount) wallet.process(tx);
+        WalletAccount updated = wallet.process(tx);
 
         accountRepository.save(updated);
         transactionRepository.save(tx);

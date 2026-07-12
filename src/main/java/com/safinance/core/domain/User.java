@@ -7,6 +7,8 @@ public interface User extends Entity {
     String getName();
     String getEmail();
     boolean checkPassword(String password);
-    boolean isAdmin();
+    default boolean isAdmin() {
+        return getRole() == Role.ADMIN;
+    }
     Role getRole();
 }
