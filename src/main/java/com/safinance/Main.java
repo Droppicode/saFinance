@@ -27,6 +27,7 @@ import com.safinance.core.domain.IncomeTransaction;
 import com.safinance.core.domain.ExpenseTransaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.usecases.TransactionUseCase;
+import com.safinance.infra.persistence.LocalDateTimeAdapter;
 
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -38,6 +39,7 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 public class Main {
     public static void main(String[] args) {
@@ -58,6 +60,7 @@ public class Main {
                 .registerSubtype(ExpenseTransaction.class);
 
         Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .registerTypeAdapterFactory(userAdapterFactory)
             .registerTypeAdapterFactory(accountAdapterFactory)
             .registerTypeAdapterFactory(transactionAdapterFactory)
