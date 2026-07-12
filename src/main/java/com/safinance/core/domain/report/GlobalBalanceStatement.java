@@ -28,14 +28,27 @@ public class GlobalBalanceStatement extends FinancialStatementTemplate {
     protected String formatBody(List<Transaction> transactions) {
         double totalIncomes = 0.0;
         double totalExpenses = 0.0;
+        double internalTransfersPrincipal = 0.0;
 
         for (Transaction tx : transactions) {
+            boolean isInternalTransfer = tx.isTransfer();
+
             if (tx.isIncome()) {
                 totalIncomes += tx.getAmount();
+                if (isInternalTransfer) {
+                    internalTransfersPrincipal += tx.getAmount();
+                }
             } else {
                 totalExpenses += tx.getAmount();
             }
         }
+
+        // Para evitar inflar os totais com movimentações internas entre contas do mesmo usuário,
+        // subtraímos o "principal" das transferências das receitas.
+        // Como as Despesas retornam getAmount() negativo, nós SOMAMOS o principal para anular o valor inflado.
+        // (Ex: -510 + 500 = -10 de taxa real).
+        totalIncomes -= internalTransfersPrincipal;
+        totalExpenses += internalTransfersPrincipal;
 
         StringBuilder sb = new StringBuilder();
         sb.append("  RESUMO DE TRANSAÇÕES NO PERÍODO:\n");

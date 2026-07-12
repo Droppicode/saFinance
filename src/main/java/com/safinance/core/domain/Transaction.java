@@ -13,3 +13,14 @@ public interface Transaction extends Entity {
 
     /** Indica se a transação é uma entrada (receita), evitando o uso de instanceof. */
     boolean isIncome();
+
+    /** 
+     * Identifica se a transação faz parte de uma transferência interna entre contas.
+     * Baseia-se na assinatura padrão gerada pelo sistema de transferências.
+     */
+    default boolean isTransfer() {
+        return getDescription() != null 
+            && getDescription().startsWith("Transfer ") 
+            && getDescription().contains(" to account ");
+    }
+}

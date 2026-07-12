@@ -34,6 +34,9 @@ public class SavingsAccount implements Account {
 
     @Override
     public String getAccountType() { return "Poupança"; }
+    
+    @Override
+    public double getBalance() { return balance; }
 
     @Override
     public String getDisplaySummary() {

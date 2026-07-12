@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Menu responsável por gerar e exibir os relatórios financeiros.
@@ -26,17 +26,17 @@ public class ReportMenu implements BaseMenu {
     private final TransactionUseCase transactionUseCase;
     private final BaseMenu previousMenu;
 
-    private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
+    private final Map<String, Function<PromptService, BaseMenu>> transitions = new HashMap<>();
 
     public ReportMenu(User user, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase, BaseMenu previousMenu) {
         this.user = user;
         this.accountUseCase = accountUseCase;
         this.transactionUseCase = transactionUseCase;
         this.previousMenu = previousMenu;
-
+        
         registerTransition("1", this::generateAccountDetailedStatement, transitions);
         registerTransition("2", this::generateGlobalBalanceStatement, transitions);
-        registerTransition("0", () -> previousMenu, transitions);
+        registerTransition("0", prompt -> previousMenu, transitions);
     }
 
     @Override
@@ -56,10 +56,11 @@ public class ReportMenu implements BaseMenu {
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         String option = promptService.readString("> Escolha uma opção: ").trim();
-        Supplier<BaseMenu> transition = transitions.get(option);
+
+        Function<PromptService, BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
-            return transition.get();
+            return transition.apply(promptService);
         } else {
             promptService.printError("Opção inválida.");
             promptService.readString("Pressione Enter para tentar novamente.");
@@ -67,8 +68,7 @@ public class ReportMenu implements BaseMenu {
         }
     }
 
-    private BaseMenu generateAccountDetailedStatement() {
-        PromptService promptService = new PromptService(); // ou injetado via construtor/método se preferir
+    private BaseMenu generateAccountDetailedStatement(PromptService promptService) {
         List<Account> accounts = accountUseCase.listUserAccounts(user);
         
         if (accounts.isEmpty()) {
@@ -105,8 +105,7 @@ public class ReportMenu implements BaseMenu {
         return this;
     }
 
-    private BaseMenu generateGlobalBalanceStatement() {
-        PromptService promptService = new PromptService();
+    private BaseMenu generateGlobalBalanceStatement(PromptService promptService) {
         List<Account> accounts = accountUseCase.listUserAccounts(user);
         
         if (accounts.isEmpty()) {
