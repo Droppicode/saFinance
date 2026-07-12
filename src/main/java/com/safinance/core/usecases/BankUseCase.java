@@ -27,4 +27,8 @@ public class BankUseCase {
     public YearMonth getInceptionMonth() {
         return bank.getInceptionMonth();
     }
+
+    public double getYieldRate(YearMonth month) {
+        return bank.getYieldRate(month);
+    }
 }

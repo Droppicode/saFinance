@@ -31,7 +31,8 @@ public class ManageAccountsMenu implements BaseMenu {
         registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, ctx), transitions);
         registerTransition("2", () -> new TransactionMenu(user, accountOwner, ctx), transitions);
         registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, ctx), transitions);
-        if (user.getRole() == Role.REGULAR) {
+        registerTransition("4", () -> new InvestmentMenu(user, ctx), transitions);
+        if (user.equals(accountOwner)) {
             registerTransition("0", () -> new UserMenu(user, ctx), transitions);
         } else {
             registerTransition("0", () -> new UserSelectionMenu(user, ctx), transitions);
@@ -67,7 +68,8 @@ public class ManageAccountsMenu implements BaseMenu {
         promptService.printMenuOptions(
             "Criar nova conta",
             "Depositar / Retirar / Transferir",
-            "Aplicar rendimento (para contas poupança)"
+            "Simular rendimento (para contas poupança)",
+            "Gerenciar investimentos (apenas para contas Carteira)"
         );
     }
 

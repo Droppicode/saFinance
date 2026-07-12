@@ -33,7 +33,7 @@ public class AdminMenu implements BaseMenu {
         registerTransition("1", () -> new ManageUsersMenu(user, ctx), transitions);
         registerTransition("2", () -> new ManageAccountsMenu(user, user, ctx), transitions);
         registerTransition("3", () -> new ManageBanksMenu(user, ctx), transitions);
-        registerTransition("0", () -> null, transitions);
+        registerTransition("0", () -> new UserMenu(user, ctx), transitions);
     }
 
     /**
@@ -62,7 +62,7 @@ public class AdminMenu implements BaseMenu {
 
         if (transition != null) {
             if (option.equals("0")) {
-                promptService.printSuccess("Encerrando sessão. Até logo!");
+                promptService.printSuccess("Voltando ao menu do usuário...");
             }
             return transition.get();
         } else {

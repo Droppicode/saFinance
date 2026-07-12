@@ -13,3 +13,4 @@
 {"type":"CreditAccount","id":"126ff8b7-c719-436d-91af-8e10cde97418","name":"Credit","ownerId":"admin@safinance.com","balance":120.0,"creditLimit":1000.0}
 {"type":"WalletAccount","id":"8470e6c0-044f-48b7-a2ab-f34414a959fa","name":"Wallet","ownerId":"admin@safinance.com","balance":22.99000000000001,"portfolio":{}}
 {"type":"WalletAccount","id":"003395f3-9eea-472e-a424-55463b24a60e","name":"Investimentos","ownerId":"admin@safinance.com","balance":850.5,"portfolio":{}}
+{"type":"SavingsAccount","id":"798e6663-7928-4cf6-9127-cbbf6adb083e","name":"Savings","ownerId":"admin@safinance.com","balance":502.2887797651031}

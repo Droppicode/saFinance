@@ -85,7 +85,7 @@ public class AccountSelectionMenu implements BaseMenu {
             int index = Integer.parseInt(option) - 1;
             if (index >= 0 && index < savingsAccounts.size()) {
                 SavingsAccount selected = savingsAccounts.get(index);
-                return new ApplyYieldAction(ctx.transactionUseCase(), selected, () -> new ManageAccountsMenu(user, accountOwner, ctx));
+                return new ApplyYieldAction(ctx, selected, () -> new ManageAccountsMenu(user, accountOwner, ctx));
             }
         } catch (NumberFormatException ignored) {}
 

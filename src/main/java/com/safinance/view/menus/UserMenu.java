@@ -5,6 +5,7 @@ import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.User;
+import com.safinance.core.domain.Role;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +35,9 @@ public class UserMenu implements BaseMenu {
         registerTransition("1", () -> new ManageAccountsMenu(user, user, ctx), transitions);
         registerTransition("2", () -> new ReportMenu(user, ctx, this), transitions);
         registerTransition("3", () -> new InvestmentMenu(user, ctx), transitions);
+        if (user.getRole() == Role.ADMIN) {
+            registerTransition("4", () -> new AdminMenu(user, ctx), transitions);
+        }
         registerTransition("0", () -> null, transitions);
     }
 
@@ -44,11 +48,20 @@ public class UserMenu implements BaseMenu {
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Menu do Usuário");
         promptService.printInfo("Bem-vindo, " + user.getName() + "!");
-        promptService.printMenuOptions(
-            "Gerenciar contas",
-            "Extrato financeiro",
-            "Investimentos"
-        );
+        if (user.getRole() == Role.ADMIN) {
+            promptService.printMenuOptions(
+                "Gerenciar contas",
+                "Extrato financeiro",
+                "Investimentos",
+                "Painel Administrativo"
+            );
+        } else {
+            promptService.printMenuOptions(
+                "Gerenciar contas",
+                "Extrato financeiro",
+                "Investimentos"
+            );
+        }
     }
 
     @Override
