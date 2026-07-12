@@ -66,6 +66,12 @@ public class UserMenu implements BaseMenu {
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         String option = promptService.readString("> Escolha uma opção: ").trim();
+        
+        // Trata a transição para Investimentos de forma especial
+        if (option.equals("3")) {
+            return handleInvestmentTransition(promptService);
+        }
+        
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
@@ -78,5 +84,19 @@ public class UserMenu implements BaseMenu {
             promptService.readString("Pressione Enter para tentar novamente.");
             return this;
         }
-    }   
+    }
+
+    private BaseMenu handleInvestmentTransition(PromptService promptService) {
+        var wallets = investmentUseCase.getWalletAccountsByUser(user);
+
+        if (wallets == null || wallets.isEmpty()) {
+            return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, null);
+        } else if (wallets.size() == 1) {
+            return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, wallets.getFirst().getName());
+        } else {
+            var walletsStrings = wallets.stream().map(w -> w.getName()).toList();
+            String selectedWalletName = promptService.readWithOptions("Selecione a carteira de investimentos: ", walletsStrings);
+            return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, selectedWalletName);
+        }
+    }
 }

@@ -19,14 +19,22 @@ import java.util.function.Supplier;
 public class InvestmentMenu implements BaseMenu {
 
     private final User user;
+    private final AccountUseCase accountUseCase;
     private final InvestmentUseCase investmentUseCase;
     private final TransactionUseCase transactionUseCase;
+    private final String selectedWalletName;
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     public InvestmentMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
+        this(user, accountUseCase, investmentUseCase, transactionUseCase, null);
+    }
+
+    public InvestmentMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase, String selectedWalletName) {
         this.user = user;
+        this.accountUseCase = accountUseCase;
         this.investmentUseCase = investmentUseCase;
         this.transactionUseCase = transactionUseCase;
+        this.selectedWalletName = selectedWalletName;
 
         registerTransition("1", () -> this, transitions);
         registerTransition("2", () -> this, transitions);
@@ -37,24 +45,30 @@ public class InvestmentMenu implements BaseMenu {
     @Override
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Área de Investimentos");
-        WalletAccount wallet = investmentUseCase.getWalletAccount(user);
+        List<WalletAccount> wallets = investmentUseCase.getWalletAccountsByUser(user);
 
-        if (wallet == null) {
+        if (wallets == null || wallets.isEmpty()) {
             promptService.printWarning("Nenhuma conta carteira encontrada. Crie uma conta carteira antes de investir.");
             promptService.printInfo("");
             promptService.printInfo("Você pode criar uma conta carteira no menu de gerenciamento de contas.");
-        } else {
-            promptService.printInfo(String.format("Saldo disponível: R$ %.2f", wallet.getBalance()));
-            promptService.printInfo("");
-            promptService.printInfo("Portfólio atual:");
-            if (wallet.getPortfolio().isEmpty()) {
-                promptService.printInfo("  - Nenhuma posição no momento.");
-            } else {
-                wallet.getPortfolio().values().forEach(position -> {
-                    Asset asset = position.getAsset();
-                    promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
-                        asset.getTicker(), position.getQuantity(), AssetMarket.priceFor(asset.getTicker()), position.getAveragePrice()));
-                });
+        } else if (selectedWalletName != null) {
+            // Buscar a carteira atualizada pelo nome
+            WalletAccount selectedWallet = investmentUseCase.getWalletAccountByUserAndName(user, selectedWalletName);
+            
+            if (selectedWallet != null) {
+                promptService.printInfo(String.format("Carteira selecionada: %s", selectedWallet.getName()));
+                promptService.printInfo(String.format("Saldo disponível: R$ %.2f", selectedWallet.getBalance()));
+                promptService.printInfo("");
+                promptService.printInfo("Portfólio atual:");
+                if (selectedWallet.getPortfolio().isEmpty()) {
+                    promptService.printInfo("  - Nenhuma posição no momento.");
+                } else {
+                    selectedWallet.getPortfolio().values().forEach(position -> {
+                        Asset asset = position.getAsset();
+                        promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
+                            asset.getTicker(), position.getQuantity(), AssetMarket.priceFor(asset.getTicker()), position.getAveragePrice()));
+                    });
+                }
             }
         }
 
@@ -81,9 +95,22 @@ public class InvestmentMenu implements BaseMenu {
             promptService.readString("Pressione Enter para tentar novamente.");
             return this;
         }
+        
+        List<WalletAccount> wallets = investmentUseCase.getWalletAccountsByUser(user);
+        WalletAccount wallet = null;
 
-        WalletAccount wallet = investmentUseCase.getWalletAccount(user);
-        //TODO: fazer um menu/form intermediario pra selecionar walletAccount (caso o usuario tenha mais de uma wallet account)
+        if (wallets == null || wallets.isEmpty()) {
+            wallet = null;
+        } else if (selectedWalletName != null) {
+            // Buscar a carteira atualizada pelo nome
+            wallet = investmentUseCase.getWalletAccountByUserAndName(user, selectedWalletName);
+        } else if (wallets.size() > 1) {
+            List<String> walletsStrings = wallets.stream().map(WalletAccount::getName).toList();
+            String wantedWallet = promptService.readWithOptions("Selecione a carteira de investimentos que você quer acessar: ", walletsStrings);
+            wallet = investmentUseCase.getWalletAccountByUserAndName(user, wantedWallet);
+        } else {
+            wallet = wallets.getFirst();
+        }
 
         switch (option) {
             case "1":
@@ -94,7 +121,7 @@ public class InvestmentMenu implements BaseMenu {
                 }
                 return handleBuy(promptService, wallet);
             case "2":
-                if (wallet == null || wallet.getPortfolio().isEmpty()) {
+                if (wallets == null || wallet == null || wallet.getPortfolio().isEmpty()) {
                     promptService.printWarning("Não há ativos para vender.");
                     promptService.readString("Pressione Enter para voltar.");
                     return this;

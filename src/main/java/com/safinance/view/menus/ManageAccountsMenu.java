@@ -53,7 +53,7 @@ public class ManageAccountsMenu implements BaseMenu {
         }
 
         promptService.printInfo("");
-        var wallet = investmentUseCase.getWalletAccount(user);
+        var wallet = investmentUseCase.getWalletAccountByUser(user);
         if (wallet != null) {
             promptService.printInfo(String.format("Conta carteira existente: saldo R$ %.2f | %d posições", wallet.getBalance(), wallet.getPortfolio().size()));
         } else {
