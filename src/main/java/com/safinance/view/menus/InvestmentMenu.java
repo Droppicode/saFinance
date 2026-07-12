@@ -64,7 +64,6 @@ public class InvestmentMenu implements BaseMenu {
             "Vender ativo",
             "Ver portfólio"
         );
-        promptService.printInfo("(As cotações atualizam automaticamente a cada 10s.)");
     }
 
     @Override
@@ -74,22 +73,7 @@ public class InvestmentMenu implements BaseMenu {
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
-        // Refresh ao vivo: enquanto espera a opção, uma thread em segundo plano
-        // avança o mercado a cada 10s e reimprime as cotações acima do prompt.
-        String option = promptService.readStringWithRefresh(
-            "> Escolha uma opção: ",
-            10_000L,
-            () -> {
-                try {
-                    AssetMarket.advanceOneBlock();
-                    String stamp = java.time.LocalTime.now().withNano(0).toString();
-                    promptService.printLive("── Cotações [" + stamp + "] ──");
-                    AssetMarket.marketSummary().forEach(promptService::printLive);
-                } catch (Exception ignored) {
-                    // Um erro pontual no refresh não deve derrubar a thread.
-                }
-            }
-        );
+        String option = promptService.readString("> Escolha uma opção: ");
 
         Supplier<BaseMenu> transition = transitions.get(option);
 
@@ -131,21 +115,35 @@ public class InvestmentMenu implements BaseMenu {
 
     private BaseMenu handleBuy(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos disponíveis:");
-        var currentPrices = AssetMarket.snapshotPrices();
-        AssetMarket.availableAssets().forEach(asset ->
-            promptService.printInfo(String.format("%s - %s | R$ %.2f", asset.getTicker(), asset.getName(), currentPrices.get(asset.getTicker())))
-        );
+        AssetMarket.marketSummary().forEach(promptService::printInfo);
         promptService.printInfo("");
+        promptService.printInfo("(Os preços atualizam automaticamente a cada 10s.)");
 
-        String ticker = promptService.readString("Digite o ticker do ativo que deseja comprar: ").trim();
+        // Refresh ao vivo: enquanto o usuário escolhe o ativo, uma thread em segundo
+        // plano avança o mercado a cada 10s e reimprime a lista acima do prompt.
+        String ticker = promptService.readStringWithRefresh(
+            "Digite o ticker do ativo que deseja comprar: ",
+            10_000L,
+            () -> {
+                try {
+                    AssetMarket.advanceOneBlock();
+                    String stamp = java.time.LocalTime.now().withNano(0).toString();
+                    // Bloco único: uma só chamada de printLive = um só redraw do prompt.
+                    StringBuilder block = new StringBuilder("── Ativos disponíveis [" + stamp + "] ──");
+                    AssetMarket.marketSummary().forEach(line -> block.append('\n').append(line));
+                    promptService.printLive(block.toString());
+                } catch (Exception ignored) {
+                    // Um erro pontual no refresh não deve derrubar a thread.
+                }
+            }
+        );
         Asset asset = AssetMarket.findByTicker(ticker);
-        if (asset == null || currentPrices.get(asset.getTicker()) == null) {
+        if (asset == null || AssetMarket.priceFor(asset.getTicker()) == null) {
             promptService.printError("Ticker inválido ou não disponível.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
         }
 
-        double price = currentPrices.get(asset.getTicker());
         double quantity;
         try {
             quantity = Double.parseDouble(promptService.readString("Quantidade a comprar: ").trim());
@@ -156,6 +154,9 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
+        // O preço é o vigente no momento da compra, não o da listagem inicial —
+        // ele pode ter mudado durante os refreshes.
+        double price = AssetMarket.priceFor(asset.getTicker());
         try {
             WalletAccount updated = investmentUseCase.buyAsset(wallet, asset, quantity, price);
             promptService.printSuccess(String.format("Compra concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", asset.getTicker(), quantity, price, updated.getBalance()));

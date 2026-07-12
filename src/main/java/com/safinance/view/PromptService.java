@@ -49,16 +49,18 @@ public class PromptService {
     }
 
     /**
-     * Escreve {@code text} no terminal e força o flush imediato. Ao contrário do
-     * {@link #printInfo}, garante que a saída apareça na hora mesmo vinda de uma
-     * thread de segundo plano (ex: o refresh de cotações) — inclusive no console
-     * da IDE, onde recursos de terminal "de verdade" não funcionam.
+     * Escreve {@code text} (pode ser multilinha) de forma segura mesmo com um
+     * {@code readLine} ativo: usa {@link LineReader#printAbove(String)}, que
+     * imprime o texto acima do prompt e redesenha o prompt (com o que o usuário
+     * já digitou) logo abaixo. Escrever direto no {@code terminal.writer()}
+     * durante um readLine embaralha a tela, porque o JLine não sabe que o
+     * cursor se moveu. Fora de um readLine (ou em terminal burro/console da
+     * IDE), comporta-se como um println normal.
      *
-     * @param text o texto a imprimir
+     * @param text o texto a imprimir (linhas separadas por {@code \n})
      */
     public void printLive(String text) {
-        terminal.writer().println(text);
-        terminal.writer().flush();
+        reader.printAbove(text);
     }
 
     /**
