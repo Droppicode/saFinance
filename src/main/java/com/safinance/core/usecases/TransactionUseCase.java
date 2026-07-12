@@ -170,6 +170,32 @@ public class TransactionUseCase {
         transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));
     }
 
+    /**
+     * Retrieves all transactions associated with a specific account.
+     * @param accountId the account identifier
+     * @return list of transactions
+     */
+    public List<Transaction> getTransactionsForAccount(String accountId) {
+        validateAccountId(accountId, "Account");
+        return transactionRepository.findAll().stream()
+                .filter(t -> t.getAccountId().equals(accountId))
+                .toList();
+    }
+
+    /**
+     * Retrieves all transactions associated with multiple accounts.
+     * @param accountIds list of account identifiers
+     * @return list of transactions
+     */
+    public List<Transaction> getTransactionsForAccounts(List<String> accountIds) {
+        if (accountIds == null || accountIds.isEmpty()) {
+            return List.of();
+        }
+        return transactionRepository.findAll().stream()
+                .filter(t -> accountIds.contains(t.getAccountId()))
+                .toList();
+    }
+
     private Account findAccount(String accountId) {
         validateAccountId(accountId, "Account");
 
