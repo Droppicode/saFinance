@@ -13,6 +13,7 @@ import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.core.exception.DuplicateAccountException;
 
 
 /**
@@ -121,10 +122,8 @@ public class AccountUseCase {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("O nome da conta não pode ser vazio.");
         }
-        boolean exists = listUserAccounts(user).stream()
-            .anyMatch(acc -> acc.getName().equalsIgnoreCase(name));
-        if (exists) {
-            throw new IllegalArgumentException("Você já possui uma conta com o nome '" + name + "'. Escolha outro nome.");
+        if (isNameDuplicated(user, name)) {
+            throw new DuplicateAccountException("Você já possui uma conta com o nome '" + name + "'. Escolha outro nome.");
         }
     }
 

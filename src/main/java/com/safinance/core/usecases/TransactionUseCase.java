@@ -6,6 +6,7 @@ import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.TransferType;
 import com.safinance.core.domain.Bank;
 import com.safinance.core.exception.InvalidTransactionException;
+import com.safinance.core.exception.AccountNotFoundException;
 import java.util.List;
 import com.safinance.infra.persistence.Repository;
 
@@ -202,7 +203,7 @@ public class TransactionUseCase {
         Account account = accountRepository.findById(accountId);
 
         if (account == null) {
-            throw new InvalidTransactionException("Account not found: " + accountId);
+            throw new AccountNotFoundException("Account not found: " + accountId);
         }
 
         return account;

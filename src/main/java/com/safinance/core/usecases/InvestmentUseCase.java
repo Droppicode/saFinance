@@ -11,6 +11,8 @@ import com.safinance.core.domain.User;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.core.exception.AccountNotFoundException;
+import com.safinance.core.exception.AssetNotFoundException;
 
 /**
  * Caso de uso para operações de investimento em WalletAccount.
@@ -43,7 +45,7 @@ public class InvestmentUseCase {
     }
 
     public WalletAccount buyAsset(WalletAccount wallet, Asset asset, double quantity, double pricePerUnit) {
-        if (wallet == null) throw new IllegalArgumentException("Carteira não encontrada.");
+        if (wallet == null) throw new AccountNotFoundException("Carteira não encontrada.");
         if (asset == null) throw new IllegalArgumentException("Ativo não pode ser nulo.");
         if (quantity <= 0) throw new IllegalArgumentException("Quantidade deve ser maior que zero.");
         if (pricePerUnit <= 0) throw new IllegalArgumentException("Preço por unidade deve ser maior que zero.");
@@ -58,7 +60,7 @@ public class InvestmentUseCase {
     }
 
     public WalletAccount sellAsset(WalletAccount wallet, String ticker, double quantity, double pricePerUnit) {
-        if (wallet == null) throw new IllegalArgumentException("Carteira não encontrada.");
+        if (wallet == null) throw new AccountNotFoundException("Carteira não encontrada.");
         if (ticker == null || ticker.isBlank()) throw new IllegalArgumentException("Ticker não pode ser vazio.");
         if (quantity <= 0) throw new IllegalArgumentException("Quantidade deve ser maior que zero.");
         if (pricePerUnit <= 0) throw new IllegalArgumentException("Preço por unidade deve ser maior que zero.");
@@ -86,10 +88,18 @@ public class InvestmentUseCase {
     }
 
     public Asset findAssetByTicker(String ticker) {
-        return market.findByTicker(ticker);
+        Asset asset = market.findByTicker(ticker);
+        if (asset == null) {
+            throw new AssetNotFoundException("Ativo não encontrado: " + ticker);
+        }
+        return asset;
     }
 
     public Double getAssetPrice(String ticker) {
-        return market.priceFor(ticker);
+        Double price = market.priceFor(ticker);
+        if (price == null) {
+            throw new AssetNotFoundException("Preço não disponível para o ativo: " + ticker);
+        }
+        return price;
     }
 }
