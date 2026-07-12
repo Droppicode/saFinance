@@ -35,9 +35,9 @@ public class UserMenu implements BaseMenu {
         this.accountUseCase = accountUseCase;
         this.investmentUseCase = investmentUseCase;
 
-        registerTransition("1", () -> new ManageAccountsMenu(user, accountUseCase, investmentUseCase), transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(this.user, this.accountUseCase, this.investmentUseCase), transitions);
         registerTransition("2", () -> this, transitions);
-        registerTransition("3", () -> new InvestmentMenu(user, accountUseCase, investmentUseCase), transitions);
+        registerTransition("3", () -> new InvestmentMenu(this.user, this.accountUseCase, this.investmentUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 

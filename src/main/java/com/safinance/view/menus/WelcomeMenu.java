@@ -36,8 +36,8 @@ public class WelcomeMenu implements BaseMenu {
         this.investmentUseCase = investmentUseCase;
 
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
-        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, accountUseCase, investmentUseCase), transitions);
-        registerTransition("2", () -> new RegisterAction(authUseCase, userUseCase, accountUseCase, investmentUseCase), transitions);
+        registerTransition("1", () -> new LoginAction(this.authUseCase, this.userUseCase, this.accountUseCase, this.investmentUseCase), transitions);
+        registerTransition("2", () -> new RegisterAction(this.authUseCase, this.userUseCase, this.accountUseCase, this.investmentUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 

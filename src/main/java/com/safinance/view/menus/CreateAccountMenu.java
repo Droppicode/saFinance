@@ -28,7 +28,7 @@ public class CreateAccountMenu implements BaseMenu {
 
         registerTransition("1", () -> {
             accountUseCase.createWalletAccount(user, 0.0, null); 
-            return new ManageAccountsMenu(user, accountUseCase, investmentUseCase);
+            return new ManageAccountsMenu(this.user, this.accountUseCase, this.investmentUseCase);
         }, transitions);
 
         registerTransition("2", () -> {
