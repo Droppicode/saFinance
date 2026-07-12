@@ -1,5 +1,16 @@
 package com.safinance.view.menus;
 
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+import com.safinance.view.actions.LoginAction;
+import com.safinance.view.actions.RegisterAction;
+
+import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.AuthUseCase;
+import com.safinance.core.usecases.UserUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
+
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,18 +36,20 @@ public class WelcomeMenu implements BaseMenu {
     private final UserUseCase userUseCase;
     private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
-
-    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase) {
+  
+    public WelcomeMenu(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
 
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
-        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, bankUseCase, accountUseCase), transitions);
-        registerTransition("2", () -> new RegisterAction(null, authUseCase, userUseCase, bankUseCase, accountUseCase), transitions);
+        registerTransition("1", () -> new LoginAction(authUseCase, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new RegisterAction(null, authUseCase, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
         registerTransition("0", () -> null, transitions);
     }
 

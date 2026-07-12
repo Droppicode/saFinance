@@ -13,6 +13,10 @@ import com.safinance.view.PromptService;
 import com.safinance.view.menus.AdminMenu;
 import com.safinance.view.menus.UserMenu;
 import com.safinance.view.menus.WelcomeMenu;
+import com.safinance.core.usecases.TransactionUseCase;
+
+import java.util.List;
+import java.util.Collections;
 
 /**
  * Menu de login para a aplicação.
@@ -23,13 +27,15 @@ public class LoginAction implements BaseMenu {
     private final UserUseCase userUseCase;
     private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     // Construtor da classe.
-    public LoginAction(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase) {
+    public LoginAction(AuthUseCase authUseCase, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.authUseCase = authUseCase;
         this.userUseCase = userUseCase;
         this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
     }
 
     /**
@@ -63,12 +69,12 @@ public class LoginAction implements BaseMenu {
             if (user.isAdmin()) {
                 return new AdminMenu(user, userUseCase, bankUseCase, accountUseCase);
             } else {
-                return new UserMenu(user, accountUseCase);
+                return new UserMenu(user, accountUseCase, transactionUseCase);
             }
         } catch (IllegalArgumentException e) {
             promptService.printError("Erro: " + e.getMessage());
             promptService.readString("Pressione Enter para tentar novamente.");
-            return new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase); // Volta ao ínicio se errar
+            return new WelcomeMenu(authUseCase, userUseCase, bankUseCase, accountUseCase, transactionUseCase); // Volta ao ínicio se errar
         }
     }
 }

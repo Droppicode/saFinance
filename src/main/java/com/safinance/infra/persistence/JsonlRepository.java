@@ -94,4 +94,22 @@ public class JsonlRepository<T extends Entity> implements Repository<T, String> 
             throw new RuntimeException("Failed to persist entity: " + entity.getId(), e);
         }
     }
+    
+    @Override
+    public void saveAll(List<T> entities) {
+        if (entities == null || entities.isEmpty()) return;
+        
+        try (FileWriter fw = new FileWriter(filePath, true);
+             PrintWriter out = new PrintWriter(new BufferedWriter(fw))) {
+            
+            for (T entity : entities) {
+                String json = gson.toJson(entity, type);
+                out.println(json);
+                memoryCache.put(entity.getId(), entity);
+            }
+            
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to persist entities batch in: " + filePath, e);
+        }
+    }
 }

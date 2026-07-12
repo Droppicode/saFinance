@@ -30,4 +30,10 @@ public interface Repository<T, ID> {
      * @param entity the entity to save
      */
     void save(T entity);
+    /**
+     * Saves or updates multiple entities in the repository atomically (or as close to atomic as possible).
+     * 
+     * @param entities the list of entities to save
+     */
+    void saveAll(List<T> entities);
 }

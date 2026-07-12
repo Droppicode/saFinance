@@ -16,6 +16,7 @@ import com.safinance.core.usecases.BankUseCase;
 import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
+import com.safinance.core.usecases.TransactionUseCase;
 
 
 public class ManageAccountsMenu implements BaseMenu {
@@ -27,18 +28,20 @@ public class ManageAccountsMenu implements BaseMenu {
     private final UserUseCase userUseCase;
     private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public ManageAccountsMenu(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase) {
+    public ManageAccountsMenu(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountOwner = accountOwner;
         this.userUseCase = userUseCase;
         this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
 
         registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase), transitions);
-        registerTransition("2", () -> this, transitions);
+        registerTransition("2", () -> new TransactionMenu(user, accountUseCase, transactionUseCase), transitions);
         registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase), transitions);
         if (user.getRole() == Role.REGULAR) {
             registerTransition("0", () -> new UserMenu(user, accountUseCase), transitions);
@@ -57,18 +60,10 @@ public class ManageAccountsMenu implements BaseMenu {
         if (accounts.isEmpty()) {
             promptService.printWarning("Nenhuma conta encontrada para este usuário.");
         } else {
-            promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Tipo", "Saldo", "Limite"));
-            promptService.printInfo("---------------------------------------------");
+            promptService.printInfo(String.format("%-15s | %-12s | %-10s | %-10s", "Nome", "Tipo", "Saldo", "Limite"));
+            promptService.printInfo("---------------------------------------------------------");
             for (var account : accounts) {
-                if (account instanceof SavingsAccount sa) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10s", "Poupança", sa.getBalance(), "-"));
-                } else if (account instanceof WalletAccount wa) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10s", "Carteira", wa.getBalance(), "-"));
-                } else if (account instanceof CreditAccount ca) {
-                    promptService.printInfo(String.format("%-12s | %-10.2f | %-10.2f", "Crédito", ca.getBalance(), ca.getCreditLimit()));
-                } else {
-                    promptService.printInfo(String.format("%-12s | %-10s | %-10s", "Desconhecida", "-", "-"));
-                }
+                promptService.printInfo(account.getDisplaySummary());
             }
         }
 
@@ -91,10 +86,6 @@ public class ManageAccountsMenu implements BaseMenu {
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
-            if (option.equals("2")) {
-                promptService.printWarning("Em desenvolvimento: Funcionalidade ainda não implementada.");
-                promptService.readString("Pressione Enter para tentar novamente.");
-            }
             return transition.get();
         } else {
             promptService.printError("Opção inválida.");

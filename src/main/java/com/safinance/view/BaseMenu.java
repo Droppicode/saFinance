@@ -3,6 +3,7 @@ package com.safinance.view;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Interface que representa um menu base (Estado) para a aplicação.
@@ -30,6 +31,13 @@ public interface BaseMenu {
      */
     default void registerTransition(String command, Supplier<BaseMenu> stateSupplier, Map<String, Supplier<BaseMenu>> transitions) {
         transitions.put(command, stateSupplier);
+    }
+
+    /**
+     * Registra uma transição de estado que necessita do PromptService imediatamente.
+     */
+    default void registerTransition(String command, Function<PromptService, BaseMenu> stateFunction, Map<String, Function<PromptService, BaseMenu>> transitions) {
+        transitions.put(command, stateFunction);
     }
 }
 

@@ -1,5 +1,12 @@
 package com.safinance.view.menus;
 
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+
+import com.safinance.core.domain.User;
+import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +25,7 @@ public class UserMenu implements BaseMenu {
 
     private final User user;    
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
@@ -26,12 +34,13 @@ public class UserMenu implements BaseMenu {
      * @param user O usuário logado.
      * @param accountUseCase A instância do caso de uso de contas.
      */
-    public UserMenu(User user, AccountUseCase accountUseCase) {
+    public UserMenu(User user, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> new ManageAccountsMenu(user, user, null, null, accountUseCase), transitions);
-        registerTransition("2", () -> this, transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(user, user, null, null, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new ReportMenu(user, accountUseCase, transactionUseCase, this), transitions);
         registerTransition("3", () -> this, transitions);
         registerTransition("0", () -> null, transitions);
     }
@@ -63,7 +72,7 @@ public class UserMenu implements BaseMenu {
         if (transition != null) {
             if (option.equals("0")) {
                 promptService.printSuccess("Encerrando sessão. Até logo!");
-            } else if (option.equals("2") || option.equals("3")) {
+            } else if (option.equals("3")) {
                 promptService.printWarning("Em desenvolvimento: Funcionalidade ainda não implementada.");
                 promptService.readString("Pressione Enter para tentar novamente.");
             }

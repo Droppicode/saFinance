@@ -1,10 +1,20 @@
 package com.safinance.view.menus;
 
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
+import com.safinance.view.actions.CreateCreditAccountAction;
+
+import com.safinance.core.domain.User;
+import com.safinance.core.usecases.AccountUseCase;
+import com.safinance.core.usecases.TransactionUseCase;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import com.safinance.view.actions.CreateWalletAccountAction;
+import com.safinance.view.actions.CreateSavingsAccountAction;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
@@ -21,28 +31,22 @@ public class CreateAccountMenu implements BaseMenu {
     private final UserUseCase userUseCase;
     private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
+    private final TransactionUseCase transactionUseCase;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public CreateAccountMenu(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase) {
+    public CreateAccountMenu(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
         this.user = user;
         this.accountOwner = accountOwner;
         this.userUseCase = userUseCase;
         this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
+        this.transactionUseCase = transactionUseCase;
 
-        registerTransition("1", () -> {
-            accountUseCase.createWalletAccount(accountOwner, 0.0, null); 
-            return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase);
-        }, transitions);
-
-        registerTransition("2", () -> {
-            accountUseCase.createSavingsAccount(accountOwner, 0.0);
-            return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase);
-        }, transitions);
-
-        registerTransition("3", () -> new CreateCreditAccountAction(user, accountOwner, userUseCase, bankUseCase, accountUseCase), transitions); 
-        registerTransition("0", () -> new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase), transitions);
+        registerTransition("1", () -> new CreateWalletAccountAction(user, accountUseCase, transactionUseCase), transitions);
+        registerTransition("2", () -> new CreateSavingsAccountAction(user, accountUseCase, transactionUseCase), transitions);
+        registerTransition("3", () -> new CreateCreditAccountAction(user, accountUseCase, transactionUseCase), transitions); 
+        registerTransition("0", () -> new ManageAccountsMenu(user, accountUseCase, transactionUseCase), transitions);
     }
 
     @Override
@@ -62,13 +66,6 @@ public class CreateAccountMenu implements BaseMenu {
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
-            if (option.equals("1")) {
-                promptService.printSuccess("Conta corrente criada com sucesso!");
-                promptService.readString("Pressione Enter para voltar ao menu anterior.");
-            } else if (option.equals("2")) {
-                promptService.printSuccess("Conta poupança criada com sucesso!");
-                promptService.readString("Pressione Enter para voltar ao menu anterior.");
-            }
             return transition.get();
         } else {
             promptService.printError("Opção inválida.");
