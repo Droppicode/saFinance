@@ -1,7 +1,6 @@
 package com.safinance.view.menus;
 
 import com.safinance.core.domain.Asset;
-import com.safinance.core.domain.AssetMarket;
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.User;
 import com.safinance.view.BaseMenu;
@@ -42,7 +41,7 @@ public class InvestmentMenu implements BaseMenu {
     public void renderHeader(PromptService promptService) {
         // Aplica os blocos de 10s decorridos fora desta tela (ou com o app
         // fechado); sem isso os preços ficam congelados entre uma visita e outra.
-        AssetMarket.catchUpToNow();
+        ctx.investmentUseCase().catchUpToNow();
         promptService.printHeader("Área de Investimentos");
         List<WalletAccount> wallets = ctx.investmentUseCase().getWalletAccountsByUser(accountOwner);
 
@@ -65,7 +64,7 @@ public class InvestmentMenu implements BaseMenu {
                     selectedWallet.getPortfolio().values().forEach(position -> {
                         Asset asset = position.getAsset();
                         promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
-                            asset.getTicker(), position.getQuantity(), AssetMarket.priceFor(asset.getTicker()), position.getAveragePrice()));
+                            asset.getTicker(), position.getQuantity(), ctx.investmentUseCase().getAssetPrice(asset.getTicker()), position.getAveragePrice()));
                     });
                 }
             }
@@ -91,7 +90,7 @@ public class InvestmentMenu implements BaseMenu {
             10_000L,
             () -> {
                 try {
-                    AssetMarket.advanceOneBlock();
+                    ctx.investmentUseCase().advanceOneBlock();
                     StringBuilder block = new StringBuilder("\n══════════════════════════════════════════════\n        Área de Investimentos\n══════════════════════════════════════════════");
                     
                     WalletAccount wallet = ctx.investmentUseCase().getWalletAccountByUser(accountOwner);
@@ -104,7 +103,7 @@ public class InvestmentMenu implements BaseMenu {
                             double totalValor = 0;
                             for (var position : wallet.getPortfolio().values()) {
                                 Asset asset = position.getAsset();
-                                double currentPrice = AssetMarket.priceFor(asset.getTicker());
+                                double currentPrice = ctx.investmentUseCase().getAssetPrice(asset.getTicker());
                                 double totalPosition = position.getQuantity() * currentPrice;
                                 double gainLoss = totalPosition - (position.getQuantity() * position.getAveragePrice());
                                 String gainLossStr = gainLoss >= 0 ? "+" : "";
@@ -187,7 +186,7 @@ public class InvestmentMenu implements BaseMenu {
 
     private BaseMenu handleBuy(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos disponíveis:");
-        AssetMarket.marketSummary().forEach(promptService::printInfo);
+        ctx.investmentUseCase().getMarketSummary().forEach(promptService::printInfo);
         promptService.printInfo("");
         promptService.printInfo("(Os preços atualizam automaticamente a cada 10s.)");
 
@@ -198,19 +197,23 @@ public class InvestmentMenu implements BaseMenu {
             10_000L,
             () -> {
                 try {
-                    AssetMarket.advanceOneBlock();
+                    ctx.investmentUseCase().advanceOneBlock();
                     String stamp = java.time.LocalTime.now().withNano(0).toString();
                     // Bloco único: uma só chamada de printLive = um só redraw do prompt.
                     StringBuilder block = new StringBuilder("── Ativos disponíveis [" + stamp + "] ──");
-                    AssetMarket.marketSummary().forEach(line -> block.append('\n').append(line));
+                    ctx.investmentUseCase().getMarketSummary().forEach(line -> block.append('\n').append(line));
                     promptService.printLive(block.toString());
                 } catch (Exception ignored) {
                     // Um erro pontual no refresh não deve derrubar a thread.
                 }
             }
         );
-        Asset asset = AssetMarket.findByTicker(ticker);
-        if (asset == null || AssetMarket.priceFor(asset.getTicker()) == null) {
+        
+        Asset asset;
+        try {
+            asset = ctx.investmentUseCase().findAssetByTicker(ticker);
+            ctx.investmentUseCase().getAssetPrice(asset.getTicker());
+        } catch (Exception e) {
             promptService.printError("Ticker inválido ou não disponível.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
@@ -228,7 +231,7 @@ public class InvestmentMenu implements BaseMenu {
 
         // O preço é o vigente no momento da compra, não o da listagem inicial —
         // ele pode ter mudado durante os refreshes.
-        double price = AssetMarket.priceFor(asset.getTicker());
+        double price = ctx.investmentUseCase().getAssetPrice(asset.getTicker());
         try {
             WalletAccount updated = ctx.investmentUseCase().buyAsset(wallet, asset, quantity, price);
             promptService.printSuccess(String.format("Compra concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", asset.getTicker(), quantity, price, updated.getBalance()));
@@ -264,7 +267,7 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        double price = AssetMarket.priceFor(position.getAssetTicker());
+        double price = ctx.investmentUseCase().getAssetPrice(position.getAssetTicker());
         try {
             WalletAccount updated = ctx.investmentUseCase().sellAsset(wallet, ticker, quantity, price);
             promptService.printSuccess(String.format("Venda concluída: %s x %.0f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
@@ -285,7 +288,7 @@ public class InvestmentMenu implements BaseMenu {
 
         promptService.printInfo("Portfólio detalhado:");
         wallet.getPortfolio().values().forEach(position -> {
-            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), AssetMarket.priceFor(position.getAssetTicker())));
+            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(position.getAssetTicker())));
         });
         promptService.readString("Pressione Enter para voltar.");
     }

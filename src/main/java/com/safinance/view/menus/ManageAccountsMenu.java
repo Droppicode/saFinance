@@ -31,7 +31,7 @@ public class ManageAccountsMenu implements BaseMenu {
         registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, ctx), transitions);
         registerTransition("2", () -> new TransactionMenu(user, accountOwner, ctx), transitions);
         registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, ctx), transitions);
-        registerTransition("4", () -> new InvestmentMenu(accountOwner, ctx, this), transitions);
+        registerTransition("4", () -> null, transitions); // Tratado especialmente no handleInput
         if (user.equals(accountOwner)) {
             registerTransition("0", () -> new UserMenu(user, ctx), transitions);
         } else {
@@ -81,6 +81,11 @@ public class ManageAccountsMenu implements BaseMenu {
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         String option = promptService.readString("> Escolha uma opção: ").trim();
+        
+        if (option.equals("4")) {
+            return handleInvestmentTransition(promptService);
+        }
+        
         Supplier<BaseMenu> transition = transitions.get(option);
 
         if (transition != null) {
@@ -89,6 +94,24 @@ public class ManageAccountsMenu implements BaseMenu {
             promptService.printError("Opção inválida.");
             promptService.readString("Pressione Enter para tentar novamente.");
             return this;
+        }
+    }
+    
+    private BaseMenu handleInvestmentTransition(PromptService promptService) {
+        var wallets = ctx.investmentUseCase().getWalletAccountsByUser(accountOwner);
+
+        if (wallets == null || wallets.isEmpty()) {
+            return new InvestmentMenu(accountOwner, ctx, this, null);
+        } else if (wallets.size() == 1) {
+            return new InvestmentMenu(accountOwner, ctx, this, wallets.getFirst().getName());
+        } else {
+            var walletsStrings = wallets.stream().map(w -> w.getName()).toList();
+            String selectedWalletName = promptService.readWithOptions("Selecione a carteira de investimentos: ", walletsStrings);
+            var wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName);
+            if (wallet == null) {
+                return this;
+            }
+            return new InvestmentMenu(accountOwner, ctx, this, selectedWalletName);
         }
     }
     

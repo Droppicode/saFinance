@@ -119,4 +119,16 @@ public class InvestmentUseCase {
         }
         return price;
     }
+
+    public void advanceOneBlock() {
+        market.advanceOneBlock();
+    }
+
+    public void catchUpToNow() {
+        market.catchUpToNow();
+    }
+
+    public List<String> getMarketSummary() {
+        return market.marketSummary();
+    }
 }

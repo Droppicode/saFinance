@@ -35,7 +35,6 @@ import com.safinance.core.domain.Stock;
 import com.safinance.core.domain.tax.TaxStrategy;
 import com.safinance.core.domain.tax.StandardTax;
 import com.safinance.core.domain.tax.ExemptTax;
-import com.safinance.core.domain.AssetMarket;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.User;
@@ -111,16 +110,18 @@ public class Main {
             bankRepository.save(bank);
         }
 
+        Market market = new SimulatedAssetMarket();
+
         // Estado do mercado simulado: restaura preços e último movimento da execução
         // anterior e persiste a cada novo movimento. O tempo decorrido com o app
         // fechado é aplicado via catch-up quando a tela de investimentos abre.
         MarketStateRepository marketStateRepository = new MarketStateRepository("data/market.json", gson);
         MarketStateRepository.MarketState marketState = marketStateRepository.load();
         if (marketState != null) {
-            AssetMarket.restoreState(marketState.getPrices(), marketState.getLastMove());
+            market.restoreState(marketState.getPrices(), marketState.getLastMove());
         }
-        AssetMarket.setOnMove(() ->
-            marketStateRepository.save(AssetMarket.snapshotPrices(), AssetMarket.lastMoveInstant()));
+        market.setOnMove(() ->
+            marketStateRepository.save(market.snapshotPrices(), market.lastMoveInstant()));
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
         if (userRepository.findById("admin@safinance.com") == null) {
@@ -137,7 +138,6 @@ public class Main {
         TransactionFactory transactionFactory = new TransactionFactory();
         TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory, bank);
 
-        Market market = new SimulatedAssetMarket();
         InvestmentUseCase investmentUseCase = new InvestmentUseCase(accountRepository, transactionRepository, transactionFactory, market);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando
