@@ -36,7 +36,7 @@ public class CreateAccountMenu implements BaseMenu {
     @Override
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Criar Nova Conta");
-        promptService.printMenuOptions("Corrente", "Poupança", "Credito");
+        promptService.printMenuOptions("Carteira", "Poupança", "Credito");
     }
 
     @Override

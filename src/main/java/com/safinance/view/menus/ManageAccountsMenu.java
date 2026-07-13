@@ -31,7 +31,7 @@ public class ManageAccountsMenu implements BaseMenu {
         registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, ctx), transitions);
         registerTransition("2", () -> new TransactionMenu(user, accountOwner, ctx), transitions);
         registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, ctx), transitions);
-        registerTransition("4", () -> new InvestmentMenu(user, ctx), transitions);
+        registerTransition("4", () -> new InvestmentMenu(accountOwner, ctx, this), transitions);
         if (user.equals(accountOwner)) {
             registerTransition("0", () -> new UserMenu(user, ctx), transitions);
         } else {
@@ -57,7 +57,7 @@ public class ManageAccountsMenu implements BaseMenu {
         }
 
         promptService.printInfo("");
-        var wallet = ctx.investmentUseCase().getWalletAccount(user);
+        var wallet = ctx.investmentUseCase().getWalletAccount(accountOwner);
         if (wallet != null) {
             promptService.printInfo(String.format("Conta carteira existente: saldo R$ %.2f | %d posições", wallet.getBalance(), wallet.getPortfolio().size()));
         } else {

@@ -15,24 +15,26 @@ import java.util.function.Supplier;
 
 public class InvestmentMenu implements BaseMenu {
 
-    private final User user;
+    private final User accountOwner;
     private final MenuContext ctx;
+    private final BaseMenu previousMenu;
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public InvestmentMenu(User user, MenuContext ctx) {
-        this.user = user;
+    public InvestmentMenu(User accountOwner, MenuContext ctx, BaseMenu previousMenu) {
+        this.accountOwner = accountOwner;
         this.ctx = ctx;
+        this.previousMenu = previousMenu;
 
         registerTransition("1", () -> this, transitions);
         registerTransition("2", () -> this, transitions);
         registerTransition("3", () -> this, transitions);
-        registerTransition("0", () -> new UserMenu(user, ctx), transitions);
+        registerTransition("0", () -> previousMenu, transitions);
     }
 
     @Override
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Área de Investimentos");
-        WalletAccount wallet = ctx.investmentUseCase().getWalletAccount(user);
+        WalletAccount wallet = ctx.investmentUseCase().getWalletAccount(accountOwner);
 
         if (wallet == null) {
             promptService.printWarning("Nenhuma conta carteira encontrada. Crie uma conta carteira antes de investir.");
@@ -76,7 +78,7 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        WalletAccount wallet = ctx.investmentUseCase().getWalletAccount(user);
+        WalletAccount wallet = ctx.investmentUseCase().getWalletAccount(accountOwner);
 
         switch (option) {
             case "1":

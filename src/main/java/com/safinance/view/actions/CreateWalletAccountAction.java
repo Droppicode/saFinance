@@ -23,7 +23,7 @@ public class CreateWalletAccountAction implements BaseMenu {
 
     @Override
     public void renderHeader(PromptService promptService) {
-        promptService.printHeader("Criar Conta Corrente / Carteira");
+        promptService.printHeader("Criar Conta Carteira");
     }
 
     @Override
@@ -33,13 +33,13 @@ public class CreateWalletAccountAction implements BaseMenu {
 
     @Override
     public BaseMenu handleInput(PromptService promptService) {
-        String name = promptService.readString("Nome da Conta Corrente: ").trim();
+        String name = promptService.readString("Nome da Conta Carteira: ").trim();
         
         try {
             accountUseCase.createWalletAccount(accountOwner, 0.0, null, name);
-            promptService.printSuccess("Conta corrente '" + name + "' criada com sucesso!");
+            promptService.printSuccess("Conta carteira '" + name + "' criada com sucesso!");
         } catch (Exception e) {
-            promptService.printError("Erro ao criar conta corrente: " + e.getMessage());
+            promptService.printError("Erro ao criar conta carteira: " + e.getMessage());
         }
         
         promptService.readString("Pressione Enter para voltar ao menu de contas.");

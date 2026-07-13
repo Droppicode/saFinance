@@ -166,7 +166,12 @@ public class Main {
                     new StringsCompleter(currentState.getOptions())
                 );
                 
-                currentState = currentState.handleInput(promptService);
+                try {
+                    currentState = currentState.handleInput(promptService);
+                } catch (org.jline.reader.UserInterruptException | org.jline.reader.EndOfFileException e) {
+                    System.out.println("\nOperação cancelada pelo usuário. Encerrando o sistema...");
+                    break;
+                }
             }
             
         } catch (Exception e) {

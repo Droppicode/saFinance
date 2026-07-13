@@ -34,7 +34,7 @@ public class UserMenu implements BaseMenu {
 
         registerTransition("1", () -> new ManageAccountsMenu(user, user, ctx), transitions);
         registerTransition("2", () -> new ReportMenu(user, ctx, this), transitions);
-        registerTransition("3", () -> new InvestmentMenu(user, ctx), transitions);
+        registerTransition("3", () -> new InvestmentMenu(user, ctx, this), transitions);
         if (user.getRole() == Role.ADMIN) {
             registerTransition("4", () -> new AdminMenu(user, ctx), transitions);
         }
