@@ -260,13 +260,13 @@ classDiagram
         +T findById(String id)
         +List~T~ findAll()
     }
-    class JsonRepository~T~ {
+    class JsonlRepository~T~ {
         -String filePath
         +save(T entity)
         +T findById(String id)
         +List~T~ findAll()
     }
-    DataRepository <|.. JsonRepository
+    DataRepository <|.. JsonlRepository
     DataRepository ..> Entity : manages (gerencia)
 
     %% ----------------------------------------------------
@@ -420,7 +420,7 @@ classDiagram
     style InvestmentUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
 
     style DataRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
-    style JsonRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    style JsonlRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
 
     style ConsoleView fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
     style BaseMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
@@ -463,7 +463,7 @@ Além disso, os preceitos essenciais do **SOLID** foram validados na arquitetura
 | **O**CP *(Aberto/Fechado)* | Hierarquia de `Asset` | Para introduzir "Criptomoedas" no sistema, basta criar um novo `Asset` e uma nova `TaxStrategy`. A lógica central da `WalletAccount` permanece intacta (fechada para modificação, aberta para extensão). |
 | **L**SP *(Substituição de Liskov)* | Métodos `.process(Transaction)` | As subclasses de `Account` honram contratos base. Qualquer conta pode ser processada uniformemente pelo polimorfismo sem quebrar o estado financeiro. |
 | **I**SP *(Segregação de Interfaces)* | Diferenciação de `Tax` e `CapitalGains` | A tributação sobre venda de ativos exige parâmetros como lucros e tempo de posse, enquanto a tributação bancária é simples. A separação das interfaces não obriga contas correntes simples a dependerem de lógicas de "Home Broker". |
-| **D**IP *(Inversão de Dependência)* | `DataRepository<T>` | Os Casos de Uso conversam com o "Porta" (interface abstrata). O sistema não conhece o banco de dados. A implementação JSON (`JsonRepository`) está numa camada fraca (Infra) e acoplada através da injeção de dependência. |
+| **D**IP *(Inversão de Dependência)* | `DataRepository<T>` | Os Casos de Uso conversam com o "Porta" (interface abstrata). O sistema não conhece o banco de dados. A implementação JSON (`JsonlRepository`) está numa camada fraca (Infra) e acoplada através da injeção de dependência. |
 
 ### 4.3. GRASP & Regras de Domínio
 
@@ -509,7 +509,18 @@ O projeto possui uma suíte de testes unitários que valida as regras de negóci
 mvn test
 ```
 
-> **Dica:** Os dados persistidos da aplicação são salvos localmente na pasta `data/` em formato `.json` por padrão. Se desejar resetar o banco de dados da aplicação para testar com um ambiente limpo, basta apagar o conteúdo ou deletar os arquivos dentro do diretório `data/`.
+> **Dica:** Os dados persistidos da aplicação são salvos localmente na pasta `data/` em formato `.jsonl` por padrão. Se desejar resetar o banco de dados da aplicação para testar com um ambiente limpo, basta apagar o conteúdo ou deletar os arquivos dentro do diretório `data/`.
+
+### 5.4. Execução via Dev Container (Recomendado)
+
+O projeto está configurado para ser executado de forma fluida e padronizada através de um **Dev Container**, garantindo que o ambiente de desenvolvimento seja idêntico para todos que o executarem, dispensando a necessidade de instalar as dependências de sistema (como Java 17 e Maven) na máquina host.
+
+Para executar usando Dev Containers:
+1. Abra a pasta do projeto no **Visual Studio Code**.
+2. Certifique-se de ter a extensão **Dev Containers** (da Microsoft) instalada e o **Docker** rodando em sua máquina.
+3. Ao abrir o repositório, o VS Code exibirá uma notificação sugerindo reabrir a pasta no container. Clique em **"Reopen in Container"** (ou acesse a Paleta de Comandos `Ctrl+Shift+P` e digite `Dev Containers: Reopen in Container`).
+4. O container será construído automaticamente contendo o ambiente Java, o Maven e todas as extensões necessárias para o projeto.
+5. Uma vez dentro do container, basta abrir o terminal integrado do VS Code (`Ctrl + \``) e executar os comandos de compilação ou testes (ex: `mvn clean compile` e `mvn exec:java -Dexec.mainClass="com.safinance.Main"`) que rodarão nativamente no Linux do container.
 
 ## 6. Divisão Detalhada de Tarefas
 
@@ -517,8 +528,8 @@ Conforme exigido pelos critérios de avaliação do projeto, o desenvolvimento f
 
 | Membro do Grupo | RA | Responsabilidades Principais (Frentes de Atuação) |
 | :--- | :--- | :--- |
-| **[Marcos Menezes Nunes]** | [193438] | **Arquitetura e Integração:** Inicialização da persistência e do Adaptador de Tipos Polimórficos (Gson) para preservação de herança no JSON. Estruturação das classes principais, motor de relatórios (Padrão *Template Method*), e atuação como Líder Técnico na integração do código, revisão por pares e correções gerais do sistema. |
-| **[João Francisco Silva Freitas]** | [281254] | **Motor Bancário e de Mercado:** Modelagem profunda da entidade `Bank` e do sistema de taxas (Padrão *Strategy*). Responsável pela atualização de rendimentos e investimentos em tempo de execução, além da persistência do Mercado para sincronização de cotações em tempo real. |
-| **[Murilo Piovezana]** | [256999] | **Gestão de Investimentos e Ativos:** Desenvolvimento completo do módulo de investimentos. Design das abstrações de Ativos, implementação do menu de investimentos (Padrão *Command*) e orquestração dos fluxos complexos de transações de compra e venda, garantindo a imutabilidade do portfólio. |
-| **[Vinicius Espirito Santo Mamedi]** | [184712] | **Sistema Transacional Base:** Engenharia do motor de transações primárias (Receitas, Despesas e Transferências). Encapsulamento da criação de instâncias via Padrão *Factory Method* (`TransactionFactory`), garantindo integridade de estado e validações à prova de falhas nas lógicas de saque e depósito. |
-| **[Vinicius Marinheiro]** | [296073] | **Controle de Acesso e Interface:** Construção da camada de Segurança (`AuthUseCase`) e controle de sessão. Refatoração arquitetural das interfaces de usuário (`AdminMenu`, `UserMenu`, `WelcomeMenu`) aplicando separação de responsabilidades e o Padrão *Visitor* para controle de permissões dinâmicas (Admin vs Regular). |
+| **Marcos Menezes Nunes** | 193438 | **Arquitetura e Integração:** Inicialização da persistência e do Adaptador de Tipos Polimórficos (Gson) para preservação de herança no JSON. Estruturação das classes principais, motor de relatórios (Padrão *Template Method*), e atuação como Líder Técnico na integração do código, revisão por pares e correções gerais do sistema. |
+| **João Francisco Silva Freitas** | 281254 | **Motor Bancário e de Mercado:** Modelagem profunda da entidade `Bank` e do sistema de taxas (Padrão *Strategy*). Responsável pela atualização de rendimentos e investimentos em tempo de execução, além da persistência do Mercado para sincronização de cotações em tempo real. |
+| **Murilo Piovezana** | 256999 | **Gestão de Investimentos e Ativos:** Desenvolvimento completo do módulo de investimentos. Design das abstrações de Ativos, implementação do menu de investimentos (Padrão *Command*) e orquestração dos fluxos complexos de transações de compra e venda, garantindo a imutabilidade do portfólio. |
+| **Vinicius Espirito Santo Mamedi** | 184712 | **Sistema Transacional Base:** Engenharia do motor de transações primárias (Receitas, Despesas e Transferências). Encapsulamento da criação de instâncias via Padrão *Factory Method* (`TransactionFactory`), garantindo integridade de estado e validações à prova de falhas nas lógicas de saque e depósito. |
+| **Vinicius Marinheiro** | 296073 | **Controle de Acesso e Interface:** Construção da camada de Segurança (`AuthUseCase`) e controle de sessão. Refatoração arquitetural das interfaces de usuário (`AdminMenu`, `UserMenu`, `WelcomeMenu`) aplicando separação de responsabilidades e o Padrão *Visitor* para controle de permissões dinâmicas (Admin vs Regular). |
