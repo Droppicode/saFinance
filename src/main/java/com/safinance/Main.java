@@ -50,7 +50,7 @@ import com.safinance.infra.persistence.MarketStateRepository;
 import com.safinance.infra.persistence.LocalDateTimeAdapter;
 import com.safinance.infra.persistence.YearMonthAdapter;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
@@ -104,7 +104,7 @@ public class Main {
         Repository<Transaction, String> transactionRepository = new JsonlRepository<>("data/transactions.jsonl", Transaction.class, gson);
         Repository<Bank, String> bankRepository = new JsonlRepository<>("data/bank.jsonl", Bank.class, gson);
         
-        Bank bank = bankRepository.findById("BANK_SINGLETON");
+        Bank bank = bankRepository.findById("BANK_SINGLETON").orElse(null);
         if (bank == null) {
             bank = new Bank(YearMonth.now(), 0.005);
             bankRepository.save(bank);
@@ -124,7 +124,7 @@ public class Main {
             marketStateRepository.save(market.snapshotPrices(), market.lastMoveInstant()));
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
-        if (userRepository.findById("admin@safinance.com") == null) {
+        if (!userRepository.findById("admin@safinance.com").isPresent()) {
             userRepository.save(new AdminUser("admin@safinance.com", "Admin", "admin@safinance.com", "123456"));
         }
 

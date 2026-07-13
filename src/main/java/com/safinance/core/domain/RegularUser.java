@@ -40,10 +40,13 @@ public class RegularUser implements User {
         return Objects.equals(this.passwordHash, password);
     }
 
-
-
     @Override
     public Role getRole() { return Role.REGULAR; }
+
+    @Override
+    public <T> T accept(UserVisitor<T> visitor) {
+        return visitor.visitRegular(this);
+    }
 
     @Override
     public boolean equals(Object o) {

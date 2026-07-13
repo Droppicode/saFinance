@@ -6,7 +6,7 @@ import com.safinance.core.domain.Role;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.UserFactory;
 import com.safinance.core.exception.DuplicateAccountException;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 
 /**
  * Caso de uso para gerenciar usuários.
@@ -26,7 +26,7 @@ public class UserUseCase {
 
     public User getUser(String id) {
         // Uso direto da dependência, sem acessar Singletons globais.
-        return userRepository.findById(id);
+        return userRepository.findById(id).orElse(null);
     }
     
     /**
@@ -39,7 +39,7 @@ public class UserUseCase {
      * @return O usuário criado.
      */
     public User createUser(String name, String email, String password, Role role) {
-        if (userRepository.findById(email) != null) {
+        if (userRepository.findById(email).isPresent()) {
             throw new DuplicateAccountException("O e-mail '" + email + "' já está cadastrado no sistema.");
         }
         // Gênese isolada via Factory Pattern

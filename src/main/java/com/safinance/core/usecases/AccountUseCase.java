@@ -12,7 +12,7 @@ import com.safinance.core.domain.CreditAccount;
 import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 import com.safinance.core.exception.DuplicateAccountException;
 
 
@@ -43,7 +43,7 @@ public class AccountUseCase {
      * @return A conta correspondente ao ID fornecido, ou null se não encontrada.
      */
     public Account getAccount(String id) {
-        return accountRepository.findById(id);
+        return accountRepository.findById(id).orElse(null);
     }   
     
     /**

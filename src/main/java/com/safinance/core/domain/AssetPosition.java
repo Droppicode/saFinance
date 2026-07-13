@@ -2,6 +2,7 @@ package com.safinance.core.domain;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Representa uma posição de ativo dentro do portfólio da WalletAccount.
@@ -58,7 +59,7 @@ public class AssetPosition {
         return new AssetPosition(asset, newQuantity, newAveragePrice, firstPurchaseDate);
     }
 
-    public AssetPosition reducePosition(double quantityToSell) {
+    public Optional<AssetPosition> reducePosition(double quantityToSell) {
         if (quantityToSell <= 0) throw new IllegalArgumentException("Quantidade vendida deve ser maior que zero.");
         if (quantityToSell > this.quantity) {
             throw new IllegalArgumentException("Quantidade a vender maior que a posição disponível.");
@@ -66,10 +67,10 @@ public class AssetPosition {
 
         double remainingQuantity = this.quantity - quantityToSell;
         if (remainingQuantity == 0) {
-            return null;
+            return Optional.empty();
         }
 
-        return new AssetPosition(asset, remainingQuantity, averagePrice, firstPurchaseDate);
+        return Optional.of(new AssetPosition(asset, remainingQuantity, averagePrice, firstPurchaseDate));
     }
 
     /**

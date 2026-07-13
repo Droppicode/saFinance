@@ -40,10 +40,13 @@ public class AdminUser implements User {
         return Objects.equals(this.passwordHash, password);
     }
 
-
-
     @Override
     public Role getRole() { return Role.ADMIN; }
+
+    @Override
+    public <T> T accept(UserVisitor<T> visitor) {
+        return visitor.visitAdmin(this);
+    }
 
     @Override
     public boolean equals(Object o) {

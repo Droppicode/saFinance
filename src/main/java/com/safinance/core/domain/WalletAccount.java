@@ -98,11 +98,11 @@ public class WalletAccount implements Account {
                 if (position == null) {
                     throw new InvalidTransactionException("Ativo não encontrado no portfólio.");
                 }
-                AssetPosition updatedPosition = position.reducePosition(sellTx.getQuantity());
-                if (updatedPosition == null) {
+                java.util.Optional<AssetPosition> updatedPositionOpt = position.reducePosition(sellTx.getQuantity());
+                if (updatedPositionOpt.isEmpty()) {
                     newPortfolio.remove(sellTx.getTicker());
                 } else {
-                    newPortfolio.put(sellTx.getTicker(), updatedPosition);
+                    newPortfolio.put(sellTx.getTicker(), updatedPositionOpt.get());
                 }
             }
             default -> {
