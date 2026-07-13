@@ -32,12 +32,12 @@ public final class AssetMarket {
     private static volatile Runnable onMove;
 
     private static final List<Asset> AVAILABLE_ASSETS = List.of(
-        new Stock("FTX1", "FTX1", "Fictitious Tech", "Ficticious Tech Co."),
-        new Stock("VRPX", "VRPX", "Vertex Dynamics", "Vertex Dynamics & Cia."),
-        new RealEstateFund("NOVA11", "NOVA11", "Fundo Imobiliário Nova", "Logística"),
-        new RealEstateFund("LUNA11", "LUNA11", "Fundo Imobiliário Luna", "Papel"),
-        new FixedIncome("PRA100", "PRA100", "Prazo Certo 100 Dias", 0.065),
-        new FixedIncome("SIL200", "SIL200", "Série Silvestre 200 Dias", 0.055)
+        new Stock("FTX1", "FTX1", "Fictitious Tech", "Ficticious Tech Co.", 0.15),
+        new Stock("VRPX", "VRPX", "Vertex Dynamics", "Vertex Dynamics & Cia.", 0.12),
+        new RealEstateFund("NOVA11", "NOVA11", "Fundo Imobiliário Nova", "Logística", 0.10),
+        new RealEstateFund("LUNA11", "LUNA11", "Fundo Imobiliário Luna", "Papel", 0.14),
+        new FixedIncome("PRA100", "PRA100", "Prazo Certo 100 Dias", 0.065, 0.02),
+        new FixedIncome("SIL200", "SIL200", "Série Silvestre 200 Dias", 0.055, 0.02)
     );
 
     private static final Map<String, Double> BASE_PRICES = Map.of(

@@ -1,36 +1,28 @@
 package com.safinance.view.actions;
 
-import com.safinance.view.BaseMenu;
-import com.safinance.view.PromptService;
-import com.safinance.view.menus.WelcomeMenu;
-
-import com.safinance.core.domain.Role;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.AuthUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.UserUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
+
+import com.safinance.core.domain.Role;
+import com.safinance.core.domain.User;
+import com.safinance.core.usecases.UserUseCase;
+import com.safinance.view.BaseMenu;
+import com.safinance.view.PromptService;
 
 /**
  * Menu de Registro (Criação de nova conta de usuário).
  */
 public class RegisterAction implements BaseMenu {
 
-    private final AuthUseCase authUseCase;
+    private final User user;
     private final UserUseCase userUseCase;
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final Supplier<BaseMenu> onComplete;
 
-    public RegisterAction(AuthUseCase authUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
-        this.authUseCase = authUseCase;
+    public RegisterAction(User user, UserUseCase userUseCase, Supplier<BaseMenu> onComplete) {
+        this.user = user;
         this.userUseCase = userUseCase;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.onComplete = onComplete;
     }
 
     @Override
@@ -48,18 +40,33 @@ public class RegisterAction implements BaseMenu {
         String name = promptService.readString("Nome completo: ");
         String email = promptService.readString("Email: ");
         String password = promptService.readString("Senha: ");
+        Role role = Role.REGULAR; // Default role
+        
+        // BUG FIX: Somente admins podem criar outros admins ou definir papéis.
+        if (user != null && user.getRole() == Role.ADMIN) {
+            String roleInput = promptService.readString("Tipo de usuário (admin/regular): ").toUpperCase();
+            if (roleInput.equals("ADMIN")) {
+                role = Role.ADMIN;
+            }
+        }
 
         try {
             if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 throw new IllegalArgumentException("Todos os campos são obrigatórios.");
             }
-            userUseCase.createUser(name, email, password, Role.REGULAR);
-            promptService.printSuccess("Conta criada com sucesso! Faça login para continuar.");
+            
+            userUseCase.createUser(name, email, password, role);
+            
+            String message = "Conta criada com sucesso!";
+            if (user == null || user.getRole() != Role.ADMIN) {
+                message += " Faça login para continuar.";
+            }
+            promptService.printSuccess(message);
         } catch (Exception e) {
             promptService.printError("Erro ao criar conta: " + e.getMessage());
         }
         
-        promptService.readString("Pressione Enter para retornar ao menu principal.");
-        return new WelcomeMenu(authUseCase, userUseCase, accountUseCase, investmentUseCase, transactionUseCase);
+        promptService.readString("Pressione Enter para retornar.");
+        return onComplete.get();
     }
 }

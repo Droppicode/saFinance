@@ -6,8 +6,12 @@ import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.TransferType;
 import com.safinance.core.domain.Bank;
 import com.safinance.core.exception.InvalidTransactionException;
+import com.safinance.core.exception.AccountNotFoundException;
+import java.time.YearMonth;
 import java.util.List;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.core.domain.SavingsAccount;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Coordinates transaction operations between domain objects and repositories.
@@ -154,13 +158,13 @@ public class TransactionUseCase {
         }
 
         String description =
-                "Transfer " + transferType
-                        + " from account " + sourceAccountId
-                        + " to account " + destinationAccountId;
+                "Transferência " + transferType
+                        + " da conta '" + sourceAccount.getName() + "'"
+                        + " para a conta '" + destinationAccount.getName() + "'";
 
-        Transaction expenseTransaction = transactionFactory.createExpense(totalDebit, description, sourceAccountId);
+        Transaction expenseTransaction = transactionFactory.createExpense(totalDebit, description, sourceAccountId, true);
 
-        Transaction incomeTransaction = transactionFactory.createIncome(amount, description, destinationAccountId);
+        Transaction incomeTransaction = transactionFactory.createIncome(amount, description, destinationAccountId, true);
 
         Account updatedSourceAccount = sourceAccount.process(expenseTransaction);
 
@@ -168,6 +172,66 @@ public class TransactionUseCase {
 
         accountRepository.saveAll(List.of(updatedSourceAccount, updatedDestinationAccount));
         transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));
+    }
+
+    /**
+     * Aplica o rendimento mensal a uma conta poupança e gera o respectivo registro.
+     * @param account A conta poupança
+     * @param month O mês de referência do rendimento
+     * @return A conta atualizada
+     */
+    public SavingsAccount applyYield(SavingsAccount account, YearMonth month) {
+        if (account == null) throw new IllegalArgumentException("Conta poupança não pode ser nula.");
+        if (month == null) throw new IllegalArgumentException("Mês de rendimento não pode ser nulo.");
+        
+        double yieldAmount = account.calculateYieldAmount(month, bank);
+        
+        String description = "Rendimento mensal (" + month + ")";
+        Transaction yieldTransaction = transactionFactory.createIncome(yieldAmount, description, account.getId(), true);
+        
+        SavingsAccount updatedAccount = account.process(yieldTransaction);
+        updatedAccount = updatedAccount.withLastYieldMonth(month);
+        
+        accountRepository.save(updatedAccount);
+        transactionRepository.save(yieldTransaction);
+        
+        return updatedAccount;
+    }
+
+    /**
+     * Processa os rendimentos pendentes para todas as contas poupança do usuário até o mês atual.
+     * @param user O usuário dono das contas.
+     */
+    public void catchUpSavingsYields(com.safinance.core.domain.User user) {
+        YearMonth now = YearMonth.now();
+        
+        // OTIMIZAÇÃO: Pre-gera as taxas até o mês atual para evitar centenas de salvamentos
+        // no arquivo jsonl durante o loop de cada conta.
+        bank.getYieldRate(now);
+
+        List<SavingsAccount> savingsAccounts = accountRepository.findAll().stream()
+                .filter(account -> account.isOwnedBy(user.getId()))
+                .filter(SavingsAccount.class::isInstance)
+                .map(SavingsAccount.class::cast)
+                .toList();
+
+        for (SavingsAccount sa : savingsAccounts) {
+            YearMonth lastYield = sa.getLastYieldMonth();
+            if (lastYield == null) {
+                // Se a conta for antiga e foi carregada do JSON sem esse campo via Gson (que pula o construtor),
+                // assumimos que ela está em dia (YearMonth.now()) para não calcular juros retroativos infinitos.
+                lastYield = YearMonth.now();
+            }
+            
+            // Loop from lastYieldMonth + 1 month up to 'now'
+            YearMonth cursor = lastYield.plusMonths(1);
+            SavingsAccount currentSa = sa;
+            
+            while (!cursor.isAfter(now)) {
+                currentSa = applyYield(currentSa, cursor);
+                cursor = cursor.plusMonths(1);
+            }
+        }
     }
 
     /**
@@ -202,7 +266,7 @@ public class TransactionUseCase {
         Account account = accountRepository.findById(accountId);
 
         if (account == null) {
-            throw new InvalidTransactionException("Account not found: " + accountId);
+            throw new AccountNotFoundException("Account not found: " + accountId);
         }
 
         return account;

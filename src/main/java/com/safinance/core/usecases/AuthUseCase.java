@@ -2,6 +2,7 @@ package com.safinance.core.usecases;
 
 import com.safinance.core.domain.User;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.core.exception.InvalidCredentialsException;
 
 /**
  * Caso de Uso responsável pela Autenticação.
@@ -15,6 +16,7 @@ public class AuthUseCase {
      * Injeção de Dependência via Construtor.
      */
     public AuthUseCase(Repository<User, String> userRepository) {
+        if (userRepository == null) throw new IllegalArgumentException("O repositório de usuários não pode ser nulo.");
         this.userRepository = userRepository;
     }
 
@@ -26,6 +28,6 @@ public class AuthUseCase {
             return user; // Login bem-sucedido
         }
         
-        throw new IllegalArgumentException("Credenciais inválidas."); // Fail-Fast
+        throw new InvalidCredentialsException("Credenciais inválidas."); // Fail-Fast
     }
 }

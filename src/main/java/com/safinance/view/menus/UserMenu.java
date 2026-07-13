@@ -1,13 +1,13 @@
 package com.safinance.view.menus;
 
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.InvestmentUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
+import com.safinance.core.domain.Role;
+import com.safinance.core.domain.Role;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,27 +21,25 @@ import java.util.function.Supplier;
 public class UserMenu implements BaseMenu {
 
     private final User user;    
-    private final AccountUseCase accountUseCase;
-    private final InvestmentUseCase investmentUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     /**
      * Construtor da classe.
      * @param user O usuário logado.
-     * @param accountUseCase A instância do caso de uso de contas.
-     * @param investmentUseCase A instância do caso de uso de investimentos.
+     * @param ctx O contexto com todas as dependências de caso de uso.
      */
-    public UserMenu(User user, AccountUseCase accountUseCase, InvestmentUseCase investmentUseCase, TransactionUseCase transactionUseCase) {
+    public UserMenu(User user, MenuContext ctx) {
         this.user = user;
-        this.accountUseCase = accountUseCase;
-        this.investmentUseCase = investmentUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
 
-        registerTransition("1", () -> new ManageAccountsMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
-        registerTransition("2", () -> new ReportMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase, this), transitions);
-        registerTransition("3", () -> new InvestmentMenu(this.user, this.accountUseCase, this.investmentUseCase, this.transactionUseCase), transitions);
+        registerTransition("1", () -> new ManageAccountsMenu(user, user, ctx), transitions);
+        registerTransition("2", () -> new ReportMenu(user, ctx, this), transitions);
+        registerTransition("3", () -> new InvestmentMenu(user, ctx, this), transitions);
+        if (user.getRole() == Role.ADMIN) {
+            registerTransition("4", () -> new AdminMenu(user, ctx), transitions);
+        }
         registerTransition("0", () -> null, transitions);
     }
 
@@ -52,11 +50,20 @@ public class UserMenu implements BaseMenu {
     public void renderHeader(PromptService promptService) {
         promptService.printHeader("Menu do Usuário");
         promptService.printInfo("Bem-vindo, " + user.getName() + "!");
-        promptService.printMenuOptions(
-            "Gerenciar contas",
-            "Extrato financeiro",
-            "Investimentos"
-        );
+        if (user.getRole() == Role.ADMIN) {
+            promptService.printMenuOptions(
+                "Gerenciar contas",
+                "Extrato financeiro",
+                "Investimentos",
+                "Painel Administrativo"
+            );
+        } else {
+            promptService.printMenuOptions(
+                "Gerenciar contas",
+                "Extrato financeiro",
+                "Investimentos"
+            );
+        }
     }
 
     @Override
@@ -88,20 +95,20 @@ public class UserMenu implements BaseMenu {
     }
 
     private BaseMenu handleInvestmentTransition(PromptService promptService) {
-        var wallets = investmentUseCase.getWalletAccountsByUser(user);
+        var wallets = ctx.investmentUseCase().getWalletAccountsByUser(user);
 
         if (wallets == null || wallets.isEmpty()) {
-            return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, null);
+            return new InvestmentMenu(user, ctx, this, null);
         } else if (wallets.size() == 1) {
-            return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, wallets.getFirst().getName());
+            return new InvestmentMenu(user, ctx, this, wallets.getFirst().getName());
         } else {
             var walletsStrings = wallets.stream().map(w -> w.getName()).toList();
             String selectedWalletName = promptService.readWithOptions("Selecione a carteira de investimentos: ", walletsStrings);
-            WalletAccount wallet = investmentUseCase.getWalletAccountByUserAndName(user, selectedWalletName);
+            WalletAccount wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(user, selectedWalletName);
             if (wallet == null) {
                 return this;
             }
-            return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, selectedWalletName);
+            return new InvestmentMenu(user, ctx, this, selectedWalletName);
         }
     }
 }

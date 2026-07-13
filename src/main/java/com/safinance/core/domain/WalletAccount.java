@@ -22,6 +22,7 @@ public class WalletAccount implements Account {
     public WalletAccount(String id, String ownerId, double balance, Map<String, AssetPosition> portfolio, String name) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("O ID da conta não pode ser nulo.");
         if (ownerId == null || ownerId.isBlank()) throw new IllegalArgumentException("O ID do dono não pode ser nulo.");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("O nome da conta não pode ser nulo.");
         if (!Double.isFinite(balance)) throw new IllegalArgumentException("O saldo da conta deve ser finito.");
         if (balance < 0) throw new IllegalArgumentException("O saldo inicial da Wallet não pode ser negativo.");
         
@@ -57,6 +58,15 @@ public class WalletAccount implements Account {
         return portfolio == null ? Collections.emptyMap() : portfolio;
     }
 
+    /**
+     * Retorna a representação do portfólio já formatada, mantendo o encapsulamento (Tell, Don't Ask).
+     */
+    public java.util.List<String> getPortfolioSummary() {
+        return getPortfolio().values().stream()
+                .map(AssetPosition::getDisplaySummary)
+                .toList();
+    }
+
     @Override
     public WalletAccount process(Transaction t) {
         validateTransaction(t);
@@ -71,18 +81,39 @@ public class WalletAccount implements Account {
             throw new InsufficientFundsException("Insufficient balance in WalletAccount.");
         }
         
-        return new WalletAccount(this.id, this.ownerId, newBalance, this.portfolio, this.name);
+        Map<String, AssetPosition> newPortfolio = new HashMap<>(getPortfolio());
+
+        switch (t) {
+            case BuyAssetTransaction buyTx -> {
+                var position = newPortfolio.get(buyTx.getAssetTicker());
+                if (position == null) {
+                    position = new AssetPosition(buyTx.getAsset(), buyTx.getQuantity(), buyTx.getPricePerUnit(), t.getDate());
+                } else {
+                    position = position.updatePosition(buyTx.getQuantity(), buyTx.getPricePerUnit());
+                }
+                newPortfolio.put(buyTx.getAssetTicker(), position);
+            }
+            case SellAssetTransaction sellTx -> {
+                var position = newPortfolio.get(sellTx.getTicker());
+                if (position == null) {
+                    throw new InvalidTransactionException("Ativo não encontrado no portfólio.");
+                }
+                AssetPosition updatedPosition = position.reducePosition(sellTx.getQuantity());
+                if (updatedPosition == null) {
+                    newPortfolio.remove(sellTx.getTicker());
+                } else {
+                    newPortfolio.put(sellTx.getTicker(), updatedPosition);
+                }
+            }
+            default -> {
+                // Outras transações não afetam o portfólio diretamente (apenas o saldo)
+            }
+        }
+        
+        return new WalletAccount(this.id, this.ownerId, newBalance, newPortfolio, this.name);
     }
 
-    private void validateTransaction(Transaction t) {
-        if (t == null) {
-            throw new InvalidTransactionException("Transaction cannot be null.");
-        }
 
-        if (!this.id.equals(t.getAccountId())) {
-            throw new InvalidTransactionException("Transaction does not belong to this account.");
-        }
-    }
 
     /**
      * Wither para atualizar a carteira de investimentos.

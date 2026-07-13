@@ -27,6 +27,14 @@ public class AssetPosition {
         return asset;
     }
 
+    public String getAssetTicker() {
+        return asset.getTicker();
+    }
+
+    public String getAssetName() {
+        return asset.getName();
+    }
+
     public double getQuantity() {
         return quantity;
     }
@@ -62,6 +70,14 @@ public class AssetPosition {
         }
 
         return new AssetPosition(asset, remainingQuantity, averagePrice, firstPurchaseDate);
+    }
+
+    /**
+     * Formata a posição atual para exibição em extratos (Tell, Don't Ask).
+     */
+    public String getDisplaySummary() {
+        return String.format("%s x %.4f @ R$ %.2f (Preço Médio: R$ %.2f)",
+                asset.getTicker(), quantity, averagePrice, averagePrice);
     }
 
     @Override

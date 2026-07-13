@@ -48,6 +48,37 @@ public class PromptService {
         return reader.readLine(promptText).trim();
     }
 
+
+    /**
+     * Reads a double value from the user, returning null if the input is not a valid number.
+     * 
+     * @param promptText the prompt label displayed before the cursor
+     * @return the parsed double value or null if invalid
+     */
+    public Double readDouble(String promptText) {
+        String input = readString(promptText);
+        try {
+            return Double.parseDouble(input);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * Reads a YearMonth value from the user, returning null if the input is not a valid YearMonth.
+     * @param promptText the prompt label displayed before the cursor
+     * @return the parsed YearMonth value or null if invalid
+     */
+    public java.time.YearMonth readYearMonth(String promptText) {
+        String input = readString(promptText);
+        try {
+            return java.time.YearMonth.parse(input);
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
     /**
      * Escreve {@code text} (pode ser multilinha) de forma segura mesmo com um
      * {@code readLine} ativo: usa {@link LineReader#printAbove(String)}, que
