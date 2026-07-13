@@ -4,6 +4,7 @@ import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.User;
+import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.usecases.AccountUseCase;
 import com.safinance.core.usecases.InvestmentUseCase;
 import com.safinance.core.usecases.TransactionUseCase;
@@ -96,6 +97,10 @@ public class UserMenu implements BaseMenu {
         } else {
             var walletsStrings = wallets.stream().map(w -> w.getName()).toList();
             String selectedWalletName = promptService.readWithOptions("Selecione a carteira de investimentos: ", walletsStrings);
+            WalletAccount wallet = investmentUseCase.getWalletAccountByUserAndName(user, selectedWalletName);
+            if (wallet == null) {
+                return this;
+            }
             return new InvestmentMenu(user, accountUseCase, investmentUseCase, transactionUseCase, selectedWalletName);
         }
     }
