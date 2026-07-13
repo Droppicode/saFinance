@@ -15,13 +15,15 @@ public final class IncomeTransaction implements Transaction {
     private final LocalDateTime date;
     private final String description;
     private final String accountId;
+    private final boolean isTransfer;
 
     public IncomeTransaction(
             String id,
             double amount,
             LocalDateTime date,
             String description,
-            String accountId
+            String accountId,
+            boolean isTransfer
     ) {
         validateId(id);
         validateAmount(amount);
@@ -34,6 +36,7 @@ public final class IncomeTransaction implements Transaction {
         this.date = date;
         this.description = description;
         this.accountId = accountId;
+        this.isTransfer = isTransfer;
     }
 
     @Override
@@ -64,6 +67,11 @@ public final class IncomeTransaction implements Transaction {
     @Override
     public boolean isIncome() {
         return true;
+    }
+
+    @Override
+    public boolean isTransfer() {
+        return isTransfer;
     }
 
     private static void validateId(String id) {

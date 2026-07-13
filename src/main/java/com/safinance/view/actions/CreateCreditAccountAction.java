@@ -2,32 +2,23 @@ package com.safinance.view.actions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.PromptService;
-import com.safinance.view.menus.ManageAccountsMenu;
-import com.safinance.core.usecases.TransactionUseCase;
 
 public class CreateCreditAccountAction implements BaseMenu {
 
-    private final User user;
     private final User accountOwner;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
     private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final Supplier<BaseMenu> onComplete;
 
-    public CreateCreditAccountAction(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
-        this.user = user;
+    public CreateCreditAccountAction(User accountOwner, AccountUseCase accountUseCase, Supplier<BaseMenu> onComplete) {
         this.accountOwner = accountOwner;
-        this.userUseCase = userUseCase;
-        this.bankUseCase = bankUseCase;
         this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.onComplete = onComplete;
     }
 
     @Override
@@ -55,7 +46,7 @@ public class CreateCreditAccountAction implements BaseMenu {
         } catch (NumberFormatException e) {
             promptService.printError("Valor de limite inválido.");
             promptService.readString("Pressione Enter para voltar ao menu de contas.");
-            return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
+            return onComplete.get();
         }
         
         try {
@@ -66,6 +57,6 @@ public class CreateCreditAccountAction implements BaseMenu {
         }
         
         promptService.readString("Pressione Enter para voltar ao menu anterior.");
-        return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
+        return onComplete.get();
     }
 }

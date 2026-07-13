@@ -7,11 +7,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 /**
@@ -20,27 +17,18 @@ import com.safinance.view.PromptService;
 public class UserSelectionMenu implements BaseMenu {
 
     private final User user;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     /**
      * Construtor da classe.
      * @param user O usuário logado (administrador).
-     * @param bankUseCase A instância do caso de uso de bancos.
-     * @param userUseCase A instância do caso de uso de usuários.
-     * @param accountUseCase A instância do caso de uso de contas.
-     * @param transactionUseCase A instância do caso de uso de transações.
+     * @param ctx O contexto com todas as dependências de caso de uso.
      */
-    public UserSelectionMenu(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public UserSelectionMenu(User user, MenuContext ctx) {
         this.user = user;
-        this.bankUseCase = bankUseCase;
-        this.userUseCase = userUseCase;
-        this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;   
+        this.ctx = ctx;
     }
 
     /**
@@ -52,9 +40,7 @@ public class UserSelectionMenu implements BaseMenu {
         promptService.printHeader("Seleção de Usuário");
         promptService.printInfo("");
 
-        transitions.put("0", () -> new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase));
-
-        var users = userUseCase.getAllUsers();
+        var users = ctx.userUseCase().getAllUsers();
         if (users.isEmpty()) {
             promptService.printWarning("Nenhum usuário encontrado.\n");
             return;
@@ -63,8 +49,6 @@ public class UserSelectionMenu implements BaseMenu {
         int index = 1;
         for (User u : users) {
             promptService.printInfo(index + ". " + u.getName() + " (" + u.getEmail() + ")");
-            final int chosenIndex = index;
-            transitions.put(String.valueOf(chosenIndex), () -> new ManageAccountsMenu(user, u, userUseCase, bankUseCase, accountUseCase, transactionUseCase));
             index++;
         }
 
@@ -78,20 +62,29 @@ public class UserSelectionMenu implements BaseMenu {
 
     /**
      * Manipula a entrada do usuário.
+     * As transições dinâmicas são construídas aqui (não no renderHeader) para evitar side effects no render.
      * @param promptService A instância do serviço de prompt.
      * @return O menu correspondente à opção escolhida.
      */
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         String option = promptService.readString("> Escolha o usuário pelo índice ou digite '0' para voltar: ").trim();
-        Supplier<BaseMenu> transition = transitions.get(option);
 
-        if (transition != null) {
-            return transition.get();
-        } else {
-            promptService.printError("Opção inválida.");
-            promptService.readString("Pressione Enter para tentar novamente.");
-            return this;
+        if (option.equals("0")) {
+            return new ManageUsersMenu(user, ctx);
         }
+
+        var users = ctx.userUseCase().getAllUsers();
+        try {
+            int index = Integer.parseInt(option) - 1;
+            if (index >= 0 && index < users.size()) {
+                User selectedUser = users.get(index);
+                return new ManageAccountsMenu(user, selectedUser, ctx);
+            }
+        } catch (NumberFormatException ignored) {}
+
+        promptService.printError("Opção inválida.");
+        promptService.readString("Pressione Enter para tentar novamente.");
+        return this;
     }
 }

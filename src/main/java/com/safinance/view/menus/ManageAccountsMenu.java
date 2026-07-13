@@ -8,11 +8,8 @@ import java.util.function.Supplier;
 
 import com.safinance.core.domain.Role;
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 
@@ -22,28 +19,23 @@ public class ManageAccountsMenu implements BaseMenu {
     // Se o usuário logado for admin, accountOwner representa o usuário cujas contas
     // estão sendo gerenciadas. Para um usuário regular, é normalmente o próprio usuário logado.
     private final User accountOwner;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
-    public ManageAccountsMenu(User user, User accountOwner, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public ManageAccountsMenu(User user, User accountOwner, MenuContext ctx) {
         this.user = user;
         this.accountOwner = accountOwner;
-        this.userUseCase = userUseCase;
-        this.bankUseCase = bankUseCase;
-        this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
 
-        registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
-        registerTransition("2", () -> new TransactionMenu(user, accountOwner, accountUseCase, userUseCase, bankUseCase, transactionUseCase), transitions);
-        registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
-        if (user.getRole() == Role.REGULAR) {
-            registerTransition("0", () -> new UserMenu(user, accountUseCase, transactionUseCase), transitions);
+        registerTransition("1", () -> new CreateAccountMenu(user, accountOwner, ctx), transitions);
+        registerTransition("2", () -> new TransactionMenu(user, accountOwner, ctx), transitions);
+        registerTransition("3", () -> new AccountSelectionMenu(user, accountOwner, ctx), transitions);
+        registerTransition("4", () -> new InvestmentMenu(accountOwner, ctx, this), transitions);
+        if (user.equals(accountOwner)) {
+            registerTransition("0", () -> new UserMenu(user, ctx), transitions);
         } else {
-            registerTransition("0", () -> new UserSelectionMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
+            registerTransition("0", () -> new UserSelectionMenu(user, ctx), transitions);
         }
     }
 
@@ -53,7 +45,7 @@ public class ManageAccountsMenu implements BaseMenu {
         promptService.printInfo("Contas do usuário: " + accountOwner.getName());
         promptService.printInfo("");
         
-        var accounts = accountUseCase.listUserAccounts(accountOwner);
+        var accounts = ctx.accountUseCase().listUserAccounts(accountOwner);
         if (accounts.isEmpty()) {
             promptService.printWarning("Nenhuma conta encontrada para este usuário.");
         } else {
@@ -65,10 +57,19 @@ public class ManageAccountsMenu implements BaseMenu {
         }
 
         promptService.printInfo("");
+        var wallet = ctx.investmentUseCase().getWalletAccountByUser(accountOwner);
+        if (wallet != null) {
+            promptService.printInfo(String.format("Conta carteira existente: saldo R$ %.2f | %d posições", wallet.getBalance(), wallet.getPortfolio().size()));
+        } else {
+            promptService.printInfo("Nenhuma conta carteira encontrada. Você pode criar uma no menu de contas.");
+        }
+
+        promptService.printInfo("");
         promptService.printMenuOptions(
-        "Criar nova conta",
-                    "Depositar / Retirar / Transferir",
-                    "Aplicar rendimento (para contas poupança)"
+            "Criar nova conta",
+            "Depositar / Retirar / Transferir",
+            "Simular rendimento (para contas poupança)",
+            "Gerenciar investimentos (apenas para contas Carteira)"
         );
     }
 

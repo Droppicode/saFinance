@@ -3,82 +3,95 @@ package com.safinance.view.actions;
 import java.time.YearMonth;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
+import java.time.temporal.ChronoUnit;
 
 import com.safinance.core.domain.SavingsAccount;
-import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
-import com.safinance.view.menus.ManageAccountsMenu;
 
 /**
  * Ação para aplicar rendimento em uma conta de poupança específica.
  */
 public class ApplyYieldAction implements BaseMenu {
 
-    private final User user;
-    private final User accountOwner;
+    private final MenuContext ctx;
     private final SavingsAccount sa;
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final Supplier<BaseMenu> onComplete;
 
-    /**
-     * Construtor da classe.
-     * @param user O usuário logado.
-     * @param accountOwner O usuário cujas contas estão sendo gerenciadas.
-     * @param sa A conta de poupança na qual aplicar o rendimento.
-     * @param userUseCase A instância do caso de uso de usuários.
-     * @param bankUseCase A instância do caso de uso de bancos.
-     * @param accountUseCase A instância do caso de uso de contas.
-     */
-    public ApplyYieldAction(User user, User accountOwner, SavingsAccount sa, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
-        this.user = user;
-        this.accountOwner = accountOwner;
+    public ApplyYieldAction(MenuContext ctx, SavingsAccount sa, Supplier<BaseMenu> onComplete) {
+        this.ctx = ctx;
         this.sa = sa;
-        this.userUseCase = userUseCase;
-        this.bankUseCase = bankUseCase;
-        this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.onComplete = onComplete;
     }
 
-    /**
-     * Renderiza o cabeçalho do menu.
-     * @param promptService A instância do serviço de prompt.
-     */
     @Override
     public void renderHeader(PromptService promptService) {
-        promptService.printHeader("Aplicar Rendimento");
+        promptService.printHeader("Simulação de Rendimento da Poupança");
+        
+        YearMonth current = YearMonth.now();
+        
+        promptService.printInfo("O nosso banco simula a passagem do tempo na economia real.");
+        promptService.printInfo("Data atual: " + current + "\n");
     }
 
-    /**
-     * Retorna as opções disponíveis no menu.
-     * @return Uma lista com as opções disponíveis.
-     */
     @Override
     public List<String> getOptions() {
         return Collections.emptyList();
     }
 
-    /**
-     * Manipula a entrada do usuário.
-     * @param promptService A instância do serviço de prompt.
-     * @return O menu correspondente à opção escolhida.
-     */
     @Override
     public BaseMenu handleInput(PromptService promptService) {
         try {
-            YearMonth month =promptService.readYearMonth("Digite o ano e mês para aplicar o rendimento (formato: YYYY-MM): ");
-            accountUseCase.applyYield(this.sa, month);
-            promptService.printSuccess("Rendimento aplicado com sucesso.");
+            String input = promptService.readString("Digite o ano e mês para simular (formato: YYYY-MM) ou '0' para sair: ");
+            if (input.trim().equals("0")) {
+                return onComplete.get();
+            }
+            
+            YearMonth targetMonth = YearMonth.parse(input.trim());
+            YearMonth currentMonth = YearMonth.now();
+            
+            if (targetMonth.isBefore(currentMonth) || targetMonth.equals(currentMonth)) {
+                promptService.printError("O mês alvo deve ser no futuro em relação ao mês atual (" + currentMonth + ").");
+                promptService.readString("Pressione Enter para tentar novamente.");
+                return this;
+            }
+            
+            double simulatedBalance = sa.getBalance();
+            YearMonth cursor = currentMonth.plusMonths(1);
+            
+            // OTIMIZAÇÃO: Solicita a taxa do mês final ANTES do loop. 
+            // Isso faz com que a classe Bank gere todos os meses intermediários de uma vez 
+            // na memória e salve no JSON apenas 1 vez (evitando centenas de linhas no arquivo).
+            ctx.bankUseCase().getYieldRate(targetMonth);
+            
+            // Loop para aplicar os juros compostos mês a mês
+            while (!cursor.isAfter(targetMonth)) {
+                double rate = ctx.bankUseCase().getYieldRate(cursor);
+                simulatedBalance += simulatedBalance * rate;
+                cursor = cursor.plusMonths(1);
+            }
+            
+            double totalYield = simulatedBalance - sa.getBalance();
+            
+            long totalMonthsPassed = ChronoUnit.MONTHS.between(currentMonth, targetMonth);
+            long simYears = totalMonthsPassed / 12;
+            long simMonths = totalMonthsPassed % 12;
+            
+            promptService.printSuccess("--- Resultado da Simulação (Juros Compostos) ---");
+            promptService.printInfo(String.format("Período projetado: %d anos e %d meses (de %s até %s)", simYears, simMonths, currentMonth, targetMonth));
+            promptService.printInfo(String.format("Rendimento acumulado total: R$ %.2f", totalYield));
+            promptService.printInfo(String.format("Saldo total projetado no final: R$ %.2f\n", simulatedBalance));
+            
+        } catch (java.time.format.DateTimeParseException e) {
+            promptService.printError("Formato de data inválido.");
+        } catch (IllegalArgumentException e) {
+            promptService.printError(e.getMessage());
         } catch (Exception e) {
-            promptService.printError("Erro ao aplicar rendimento.");
+            promptService.printError("Erro ao simular rendimento.");
         }
-        promptService.readString("Pressione Enter para retornar.");
-        return new ManageAccountsMenu(user, accountOwner, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
+        promptService.readString("Pressione Enter para simular outro mês.");
+        return this; // Retorna para a mesma tela de simulação
     }
 }

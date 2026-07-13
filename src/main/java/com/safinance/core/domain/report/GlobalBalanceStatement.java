@@ -1,7 +1,6 @@
 package com.safinance.core.domain.report;
 
 import com.safinance.core.domain.Account;
-import com.safinance.core.domain.IncomeTransaction;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.User;
 

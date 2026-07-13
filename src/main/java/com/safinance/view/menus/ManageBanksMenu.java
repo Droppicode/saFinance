@@ -8,11 +8,8 @@ import java.util.function.Supplier;
 
 import com.safinance.core.domain.Role;
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 import com.safinance.view.actions.UpdateOperationTaxAction;
 import com.safinance.view.actions.UpdateYieldRateAction;
@@ -23,31 +20,23 @@ import com.safinance.view.actions.UpdateYieldRateAction;
 public class ManageBanksMenu implements BaseMenu {
 
     private final User user;
-    private final BankUseCase bankUseCase;
-    private final UserUseCase userUseCase;
-    private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     /**
      * Construtor da classe ManageBanksMenu.
      * @param user O usuário logado.
-     * @param bankUseCase A instância do caso de uso de bancos.
-     * @param userUseCase A instância do caso de uso de usuários.
-     * @param accountUseCase A instância do caso de uso de contas.
+     * @param ctx O contexto com todas as dependências de caso de uso.
      */
-    public ManageBanksMenu(User user, BankUseCase bankUseCase, UserUseCase userUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public ManageBanksMenu(User user, MenuContext ctx) {
         this.user = user;
-        this.bankUseCase = bankUseCase;
-        this.userUseCase = userUseCase;
-        this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
 
         // Registra transições do menu para ações específicas.
-        registerTransition("1", () -> new UpdateYieldRateAction(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
-        registerTransition("2", () -> new UpdateOperationTaxAction(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
-        registerTransition("0", () -> null, transitions);
+        registerTransition("1", () -> new UpdateYieldRateAction(ctx.bankUseCase(), () -> this), transitions);
+        registerTransition("2", () -> new UpdateOperationTaxAction(ctx.bankUseCase(), () -> this), transitions);
+        registerTransition("0", () -> new AdminMenu(user, ctx), transitions);
     }
 
     @Override
@@ -86,7 +75,7 @@ public class ManageBanksMenu implements BaseMenu {
             return transition.get();
         } else {
             promptService.printError("Opção inválida. Tente novamente.");
-            return new AdminMenu(user, userUseCase, bankUseCase, accountUseCase, transactionUseCase);
+            return this;
         }
     }
 }

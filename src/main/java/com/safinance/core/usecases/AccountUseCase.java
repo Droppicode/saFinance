@@ -13,6 +13,7 @@ import com.safinance.core.domain.SavingsAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.infra.persistence.Repository;
+import com.safinance.core.exception.DuplicateAccountException;
 
 
 /**
@@ -30,6 +31,8 @@ public class AccountUseCase {
      * @param bank Banco responsável por calcular rendimentos.
      */
     public AccountUseCase(Repository<Account, String> accountRepository, Bank bank) {
+        if (accountRepository == null) throw new IllegalArgumentException("O repositório de contas não pode ser nulo.");
+        if (bank == null) throw new IllegalArgumentException("O banco não pode ser nulo.");
         this.accountRepository = accountRepository;
         this.bank = bank;
     }
@@ -113,6 +116,20 @@ public class AccountUseCase {
     }
 
     /**
+     * Lista contas de um usuário filtrando por um tipo específico (Generics),
+     * evitando o uso de instanceof e casts na camada de visualização.
+     * @param user O usuário cujas contas serão listadas.
+     * @param type A classe do tipo da conta desejada.
+     * @return Uma lista tipada de contas.
+     */
+    public <T extends Account> List<T> listUserAccountsOfType(User user, Class<T> type) {
+        return listUserAccounts(user).stream()
+            .filter(type::isInstance)
+            .map(type::cast)
+            .toList();
+    }
+
+    /**
      * Verifica se o usuário já possui uma conta com o mesmo nome.
      */
     private void checkDuplicateName(User user, String name) {
@@ -122,20 +139,10 @@ public class AccountUseCase {
         boolean exists = listUserAccounts(user).stream()
             .anyMatch(acc -> acc.getName().equalsIgnoreCase(name));
         if (exists) {
-            throw new IllegalArgumentException("Você já possui uma conta com o nome '" + name + "'. Escolha outro nome.");
+            throw new DuplicateAccountException("Você já possui uma conta com o nome '" + name + "'. Escolha outro nome.");
         }
     }
 
-    /**
-     * Aplica o rendimento mensal a uma conta poupança.
-     * @param account A conta poupança à qual o rendimento será aplicado.
-     * @param month O mês para o qual o rendimento será calculado.
-     * @return A conta poupança atualizada após a aplicação do rendimento.
-     */
-    public SavingsAccount applyYield(SavingsAccount account, YearMonth month) {
-        SavingsAccount updatedAccount = account.applyMonthlyYield(month, bank);
-        accountRepository.save(updatedAccount);
-        return updatedAccount;
-    }
+
 
 }

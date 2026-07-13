@@ -7,11 +7,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.safinance.core.domain.User;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.BankUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
-import com.safinance.core.usecases.UserUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 /**
@@ -19,45 +16,37 @@ import com.safinance.view.PromptService;
  */
 public class AdminMenu implements BaseMenu {
 
-    private final User user;    
-    private final UserUseCase userUseCase;
-    private final BankUseCase bankUseCase;
-    private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final User user;
+    private final MenuContext ctx;
 
     private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     /**
      * Construtor da classe.
      * @param user O usuário logado.
-     * @param accountUseCase A instância do caso de uso de contas.
+     * @param ctx O contexto com todas as dependências de caso de uso.
      */
-    public AdminMenu(User user, UserUseCase userUseCase, BankUseCase bankUseCase, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase) {
+    public AdminMenu(User user, MenuContext ctx) {
         this.user = user;
-        this.userUseCase = userUseCase;
-        this.bankUseCase = bankUseCase;
-        this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
 
-        registerTransition("1", () -> new ManageUsersMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
-        registerTransition("2", () -> new ManageAccountsMenu(user, user, userUseCase, bankUseCase, accountUseCase, transactionUseCase), transitions);
-        registerTransition("3", () -> new ManageBanksMenu(user, bankUseCase, userUseCase, accountUseCase, transactionUseCase), transitions);
-        registerTransition("0", () -> null, transitions);
+        registerTransition("1", () -> new ManageUsersMenu(user, ctx), transitions);
+        registerTransition("2", () -> new ManageAccountsMenu(user, user, ctx), transitions);
+        registerTransition("3", () -> new ManageBanksMenu(user, ctx), transitions);
+        registerTransition("0", () -> new UserMenu(user, ctx), transitions);
     }
 
     /**
-     * Exibe o menu do usuário.
+     * Exibe o menu do administrador.
      */
     @Override
     public void renderHeader(PromptService promptService) {
-        promptService.printHeader("Menu do Usuário");
+        promptService.printHeader("Menu do Administrador");
         promptService.printInfo("Bem-vindo, " + user.getName() + "!");
         promptService.printMenuOptions(
             "Gerenciar usuários",
             "Gerenciar contas",
-            "Gerenciar bancos",
-            "Extrato financeiro",
-            "Investimentos"
+            "Gerenciar bancos"
         );
     }
 
@@ -73,7 +62,7 @@ public class AdminMenu implements BaseMenu {
 
         if (transition != null) {
             if (option.equals("0")) {
-                promptService.printSuccess("Encerrando sessão. Até logo!");
+                promptService.printSuccess("Voltando ao menu do usuário...");
             }
             return transition.get();
         } else {

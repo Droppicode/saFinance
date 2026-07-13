@@ -5,9 +5,8 @@ import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.report.AccountDetailedStatement;
 import com.safinance.core.domain.report.GlobalBalanceStatement;
-import com.safinance.core.usecases.AccountUseCase;
-import com.safinance.core.usecases.TransactionUseCase;
 import com.safinance.view.BaseMenu;
+import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 import java.util.ArrayList;
@@ -22,16 +21,14 @@ import java.util.function.Function;
 public class ReportMenu implements BaseMenu {
 
     private final User user;
-    private final AccountUseCase accountUseCase;
-    private final TransactionUseCase transactionUseCase;
+    private final MenuContext ctx;
     private final BaseMenu previousMenu;
 
     private final Map<String, Function<PromptService, BaseMenu>> transitions = new HashMap<>();
 
-    public ReportMenu(User user, AccountUseCase accountUseCase, TransactionUseCase transactionUseCase, BaseMenu previousMenu) {
+    public ReportMenu(User user, MenuContext ctx, BaseMenu previousMenu) {
         this.user = user;
-        this.accountUseCase = accountUseCase;
-        this.transactionUseCase = transactionUseCase;
+        this.ctx = ctx;
         this.previousMenu = previousMenu;
         
         registerTransition("1", this::generateAccountDetailedStatement, transitions);
@@ -69,7 +66,7 @@ public class ReportMenu implements BaseMenu {
     }
 
     private BaseMenu generateAccountDetailedStatement(PromptService promptService) {
-        List<Account> accounts = accountUseCase.listUserAccounts(user);
+        List<Account> accounts = ctx.accountUseCase().listUserAccounts(user);
         
         if (accounts.isEmpty()) {
             promptService.printWarning("Você não possui contas cadastradas.");
@@ -80,7 +77,7 @@ public class ReportMenu implements BaseMenu {
         promptService.printInfo("Selecione a conta para o extrato:");
         for (int i = 0; i < accounts.size(); i++) {
             Account acc = accounts.get(i);
-            System.out.printf("%d - %s (%s) (Saldo: R$ %.2f)%n", i + 1, acc.getName(), acc.getAccountType(), acc.getBalance());
+            promptService.printInfo(String.format("%d - %s (%s) (Saldo: R$ %.2f)", i + 1, acc.getName(), acc.getAccountType(), acc.getBalance()));
         }
 
         String input = promptService.readString("> Conta: ");
@@ -88,12 +85,12 @@ public class ReportMenu implements BaseMenu {
             int index = Integer.parseInt(input) - 1;
             if (index >= 0 && index < accounts.size()) {
                 Account selectedAccount = accounts.get(index);
-                List<Transaction> transactions = transactionUseCase.getTransactionsForAccount(selectedAccount.getId());
+                List<Transaction> transactions = ctx.transactionUseCase().getTransactionsForAccount(selectedAccount.getId());
                 
                 AccountDetailedStatement statement = new AccountDetailedStatement();
                 String report = statement.generateReport(user, List.of(selectedAccount), transactions);
                 
-                System.out.println(report);
+                promptService.printInfo(report);
             } else {
                 promptService.printError("Conta inválida.");
             }
@@ -106,7 +103,7 @@ public class ReportMenu implements BaseMenu {
     }
 
     private BaseMenu generateGlobalBalanceStatement(PromptService promptService) {
-        List<Account> accounts = accountUseCase.listUserAccounts(user);
+        List<Account> accounts = ctx.accountUseCase().listUserAccounts(user);
         
         if (accounts.isEmpty()) {
             promptService.printWarning("Você não possui contas cadastradas para consolidar.");
@@ -115,12 +112,12 @@ public class ReportMenu implements BaseMenu {
         }
 
         List<String> accountIds = accounts.stream().map(Account::getId).toList();
-        List<Transaction> transactions = transactionUseCase.getTransactionsForAccounts(accountIds);
+        List<Transaction> transactions = ctx.transactionUseCase().getTransactionsForAccounts(accountIds);
 
         GlobalBalanceStatement statement = new GlobalBalanceStatement();
         String report = statement.generateReport(user, accounts, transactions);
         
-        System.out.println(report);
+        promptService.printInfo(report);
 
         promptService.readString("Pressione Enter para voltar.");
         return this;

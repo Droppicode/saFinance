@@ -1,6 +1,9 @@
 package com.safinance.view;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -73,6 +76,49 @@ public class PromptService {
             return java.time.YearMonth.parse(input);
         } catch (java.time.format.DateTimeParseException e) {
             return null;
+        }
+    }
+
+    /**
+     * Escreve {@code text} (pode ser multilinha) de forma segura mesmo com um
+     * {@code readLine} ativo: usa {@link LineReader#printAbove(String)}, que
+     * imprime o texto acima do prompt e redesenha o prompt (com o que o usuário
+     * já digitou) logo abaixo. Escrever direto no {@code terminal.writer()}
+     * durante um readLine embaralha a tela, porque o JLine não sabe que o
+     * cursor se moveu. Fora de um readLine (ou em terminal burro/console da
+     * IDE), comporta-se como um println normal.
+     *
+     * @param text o texto a imprimir (linhas separadas por {@code \n})
+     */
+    public void printLive(String text) {
+        clearScreen();
+        reader.printAbove(text);
+    }
+
+    /**
+     * Lê uma linha do usuário enquanto executa {@code onTick} periodicamente em
+     * segundo plano (ex: avançar e reimprimir as cotações a cada N ms).
+     *
+     * <p>O agendador roda APENAS durante esta leitura e é encerrado assim que o
+     * usuário confirma a entrada. Assim, o restante do fluxo (que lê os preços na
+     * compra/venda) nunca concorre com o refresh.</p>
+     *
+     * @param promptText     rótulo do prompt
+     * @param intervalMillis intervalo entre execuções de {@code onTick}, em ms
+     * @param onTick         ação periódica (tipicamente avança o mercado e imprime via {@link #printLive})
+     * @return a linha digitada, sem espaços nas pontas
+     */
+    public String readStringWithRefresh(String promptText, long intervalMillis, Runnable onTick) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "market-refresh");
+            thread.setDaemon(true);
+            return thread;
+        });
+        try {
+            scheduler.scheduleAtFixedRate(onTick, intervalMillis, intervalMillis, TimeUnit.MILLISECONDS);
+            return reader.readLine(promptText).trim();
+        } finally {
+            scheduler.shutdownNow();
         }
     }
 

@@ -8,6 +8,8 @@ package com.safinance.core.domain;
  * exponencial (O(N²)) do arquivo de dados da conta a cada snapshot salvo. Em vez disso, 
  * as transações são persistidas separadamente e as agregações são feitas via UseCase.
  */
+import com.safinance.core.exception.InvalidTransactionException;
+
 public interface Account extends Entity {
     String getOwnerId();
     String getName();
@@ -37,4 +39,17 @@ public interface Account extends Entity {
      * Não altera a conta atual em memória.
      */
     Account process(Transaction t);
+
+    /**
+     * Valida de forma padronizada se a transação não é nula e se pertence a esta conta.
+     * Consolida a lógica para evitar duplicação nas implementações.
+     */
+    default void validateTransaction(Transaction t) {
+        if (t == null) {
+            throw new InvalidTransactionException("Transaction cannot be null.");
+        }
+        if (!this.getId().equals(t.getAccountId())) {
+            throw new InvalidTransactionException("Transaction does not belong to this account.");
+        }
+    }
 }
