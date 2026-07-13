@@ -1,10 +1,7 @@
 package com.safinance.view.actions;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -90,14 +87,8 @@ public class TransferAction implements BaseMenu {
             return onComplete.get();
         }
 
-        double amount;
-        try {
-            String amountInput = promptService.readString("Valor da transferência: ").trim();
-            amount = NumberFormat.getInstance(new Locale("pt", "BR")).parse(amountInput).doubleValue();
-            if (!Double.isFinite(amount) || amount <= 0) {
-                throw new ParseException("Invalid amount", 0);
-            }
-        } catch (ParseException exception) {
+        Double amount = promptService.readDouble("Valor da transferência: ");
+        if (amount == null || !Double.isFinite(amount) || amount <= 0) {
             promptService.printError("O valor da transferência deve ser um número maior que zero.");
             waitForReturn(promptService);
             return onComplete.get();

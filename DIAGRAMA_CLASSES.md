@@ -209,6 +209,13 @@ classDiagram
     }
     TransactionFactory ..> Transaction : creates (instancia)
 
+    class UserVisitor~T~ {
+        <<interface>>
+        +visitAdmin(AdminUser admin) T
+        +visitRegular(RegularUser regular) T
+    }
+    User ..> UserVisitor : accept()
+
     class FinancialStatementTemplate {
         <<abstract>>
         +generateReport(User user, List~Account~ accounts, List~Transaction~ transactions)
@@ -294,21 +301,33 @@ classDiagram
     class ConsoleView {
         +start()
     }
-    class LoginMenu {
-        +showMenu()
+    class BaseMenu {
+        <<interface>>
+        +List~String~ getOptions()
+        +renderHeader(PromptService promptService)
+        +handleInput(PromptService promptService) BaseMenu
     }
-    class UserMenu {
-        +showMenu(User session)
+    class AbstractMenu {
+        <<abstract>>
+        -Map~String, MenuCommand~ commands
+        #registerCommand(String key, String label, Function action)
+        #printHeader(PromptService promptService)
     }
-    class AdminMenu {
-        +showMenu(AdminUser session)
-    }
-    class InvestmentMenu {
-        +showMenu(WalletAccount sessionAccount)
-    }
-    class ReportMenu {
-        +showMenu()
-    }
+    class MenuContext
+    
+    BaseMenu <|.. AbstractMenu
+
+    class LoginMenu
+    class UserMenu
+    class AdminMenu
+    class InvestmentMenu
+    class ReportMenu
+    
+    AbstractMenu <|-- LoginMenu
+    AbstractMenu <|-- UserMenu
+    AbstractMenu <|-- AdminMenu
+    AbstractMenu <|-- InvestmentMenu
+    AbstractMenu <|-- ReportMenu
     
     %% A MainView delega para os sub-menus
     ConsoleView --> LoginMenu : delegates
@@ -345,6 +364,7 @@ classDiagram
     style Asset fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
     style TaxStrategy fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
     style CapitalGainsTaxStrategy fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style UserVisitor fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
 
     %% DOMAIN - CLASSES ABSTRATAS (Azul Médio com Borda Tracejada)
     style FinancialStatementTemplate fill:#1e88e5,stroke:#0d47a1,stroke-width:2px,stroke-dasharray: 5 5,color:#fff
@@ -382,7 +402,10 @@ classDiagram
     style DataRepository fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
     style JsonRepository fill:#ff9800,stroke:#e65100,stroke-width:2px,color:#fff
 
-    style ConsoleView fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
+    style ConsoleView fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style BaseMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style AbstractMenu fill:#ce93d8,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style MenuContext fill:#e1bee7,stroke:#8e24aa,stroke-width:2px,color:#000
     style LoginMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style UserMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style AdminMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff

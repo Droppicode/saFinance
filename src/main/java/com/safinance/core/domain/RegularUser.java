@@ -34,13 +34,19 @@ public class RegularUser implements User {
 
     @Override
     public boolean checkPassword(String password) {
+        if (this.passwordHash != null && this.passwordHash.length() == 64) {
+            return Objects.equals(this.passwordHash, UserFactory.hashPassword(password));
+        }
         return Objects.equals(this.passwordHash, password);
     }
 
-
-
     @Override
     public Role getRole() { return Role.REGULAR; }
+
+    @Override
+    public <T> T accept(UserVisitor<T> visitor) {
+        return visitor.visitRegular(this);
+    }
 
     @Override
     public boolean equals(Object o) {

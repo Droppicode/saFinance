@@ -1,29 +1,24 @@
 package com.safinance.view.menus;
 
+import com.safinance.view.AbstractMenu;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.WalletAccount;
-import com.safinance.core.domain.Role;
-import com.safinance.core.domain.Role;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
+import com.safinance.core.domain.UserVisitor;
+import com.safinance.core.domain.AdminUser;
+import com.safinance.core.domain.RegularUser;
 
 /**
- * Menu principal para usuários não administradores.
+ * Menu principal para usuários.
+ * Usa o padrão Visitor para adicionar opções específicas de Admin (Polimorfismo).
  */
-public class UserMenu implements BaseMenu {
+public class UserMenu extends AbstractMenu {
 
     private final User user;    
     private final MenuContext ctx;
-
-    private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     /**
      * Construtor da classe.
@@ -34,64 +29,34 @@ public class UserMenu implements BaseMenu {
         this.user = user;
         this.ctx = ctx;
 
-        registerTransition("1", () -> new ManageAccountsMenu(user, user, ctx), transitions);
-        registerTransition("2", () -> new ReportMenu(user, ctx, this), transitions);
-        registerTransition("3", () -> new InvestmentMenu(user, ctx, this), transitions);
-        if (user.getRole() == Role.ADMIN) {
-            registerTransition("4", () -> new AdminMenu(user, ctx), transitions);
-        }
-        registerTransition("0", () -> null, transitions);
+        registerCommand("1", "Gerenciar contas", prompt -> new ManageAccountsMenu(user, user, ctx));
+        registerCommand("2", "Extrato financeiro", prompt -> new ReportMenu(user, ctx, this));
+        registerCommand("3", "Investimentos", prompt -> handleInvestmentTransition(prompt));
+        
+        // Double Dispatch via Visitor para resolver o menu do Admin
+        user.accept(new UserVisitor<Void>() {
+            @Override
+            public Void visitAdmin(AdminUser admin) {
+                registerCommand("4", "Painel Administrativo", prompt -> new AdminMenu(admin, ctx));
+                return null;
+            }
+
+            @Override
+            public Void visitRegular(RegularUser regular) {
+                return null;
+            }
+        });
+
+        registerCommand("0", "Sair", prompt -> {
+            prompt.printSuccess("Encerrando sessão. Até logo!");
+            return new WelcomeMenu(ctx);
+        });
     }
 
-    /**
-     * Exibe o menu do usuário.
-     */
     @Override
-    public void renderHeader(PromptService promptService) {
+    protected void printHeader(PromptService promptService) {
         promptService.printHeader("Menu do Usuário");
         promptService.printInfo("Bem-vindo, " + user.getName() + "!");
-        if (user.getRole() == Role.ADMIN) {
-            promptService.printMenuOptions(
-                "Gerenciar contas",
-                "Extrato financeiro",
-                "Investimentos",
-                "Painel Administrativo"
-            );
-        } else {
-            promptService.printMenuOptions(
-                "Gerenciar contas",
-                "Extrato financeiro",
-                "Investimentos"
-            );
-        }
-    }
-
-    @Override
-    public List<String> getOptions() {
-        return new ArrayList<>(transitions.keySet());
-    }
-
-    @Override
-    public BaseMenu handleInput(PromptService promptService) {
-        String option = promptService.readString("> Escolha uma opção: ").trim();
-        
-        // Trata a transição para Investimentos de forma especial
-        if (option.equals("3")) {
-            return handleInvestmentTransition(promptService);
-        }
-        
-        Supplier<BaseMenu> transition = transitions.get(option);
-
-        if (transition != null) {
-            if (option.equals("0")) {
-                promptService.printSuccess("Encerrando sessão. Até logo!");
-            }
-            return transition.get();
-        } else {
-            promptService.printError("Opção inválida.");
-            promptService.readString("Pressione Enter para tentar novamente.");
-            return this;
-        }
     }
 
     private BaseMenu handleInvestmentTransition(PromptService promptService) {
@@ -104,7 +69,7 @@ public class UserMenu implements BaseMenu {
         } else {
             var walletsStrings = wallets.stream().map(w -> w.getName()).toList();
             String selectedWalletName = promptService.readWithOptions("Selecione a carteira de investimentos: ", walletsStrings);
-            WalletAccount wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(user, selectedWalletName);
+            WalletAccount wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(user, selectedWalletName).orElse(null);
             if (wallet == null) {
                 return this;
             }

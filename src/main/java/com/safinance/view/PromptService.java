@@ -56,7 +56,7 @@ public class PromptService {
      * @return the parsed double value or null if invalid
      */
     public Double readDouble(String promptText) {
-        String input = readString(promptText);
+        String input = readString(promptText).replace(',', '.');
         try {
             return Double.parseDouble(input);
         } catch (NumberFormatException e) {
@@ -247,7 +247,6 @@ public class PromptService {
         for (int i = 0; i < options.length; i++) {
             printInfo((i + 1) + " - " + options[i]);
         }
-        printInfo("0 - Voltar/Sair");
     }
 
     /**

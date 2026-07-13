@@ -35,7 +35,6 @@ import com.safinance.core.domain.Stock;
 import com.safinance.core.domain.tax.TaxStrategy;
 import com.safinance.core.domain.tax.StandardTax;
 import com.safinance.core.domain.tax.ExemptTax;
-import com.safinance.core.domain.AssetMarket;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.TransactionFactory;
 import com.safinance.core.domain.User;
@@ -51,7 +50,7 @@ import com.safinance.infra.persistence.MarketStateRepository;
 import com.safinance.infra.persistence.LocalDateTimeAdapter;
 import com.safinance.infra.persistence.YearMonthAdapter;
 import com.safinance.infra.persistence.PolymorphicTypeAdapterFactory;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
@@ -105,11 +104,13 @@ public class Main {
         Repository<Transaction, String> transactionRepository = new JsonlRepository<>("data/transactions.jsonl", Transaction.class, gson);
         Repository<Bank, String> bankRepository = new JsonlRepository<>("data/bank.jsonl", Bank.class, gson);
         
-        Bank bank = bankRepository.findById("BANK_SINGLETON");
+        Bank bank = bankRepository.findById("BANK_SINGLETON").orElse(null);
         if (bank == null) {
             bank = new Bank(YearMonth.now(), 0.005);
             bankRepository.save(bank);
         }
+
+        Market market = new SimulatedAssetMarket();
 
         // Estado do mercado simulado: restaura preços e último movimento da execução
         // anterior e persiste a cada novo movimento. O tempo decorrido com o app
@@ -117,13 +118,13 @@ public class Main {
         MarketStateRepository marketStateRepository = new MarketStateRepository("data/market.json", gson);
         MarketStateRepository.MarketState marketState = marketStateRepository.load();
         if (marketState != null) {
-            AssetMarket.restoreState(marketState.getPrices(), marketState.getLastMove());
+            market.restoreState(marketState.getPrices(), marketState.getLastMove());
         }
-        AssetMarket.setOnMove(() ->
-            marketStateRepository.save(AssetMarket.snapshotPrices(), AssetMarket.lastMoveInstant()));
+        market.setOnMove(() ->
+            marketStateRepository.save(market.snapshotPrices(), market.lastMoveInstant()));
 
         // (Opcional) Salva um usuário fake só pra o teste rodar
-        if (userRepository.findById("admin@safinance.com") == null) {
+        if (!userRepository.findById("admin@safinance.com").isPresent()) {
             userRepository.save(new AdminUser("admin@safinance.com", "Admin", "admin@safinance.com", "123456"));
         }
 
@@ -137,7 +138,6 @@ public class Main {
         TransactionFactory transactionFactory = new TransactionFactory();
         TransactionUseCase transactionUseCase = new TransactionUseCase(accountRepository, transactionRepository, transactionFactory, bank);
 
-        Market market = new SimulatedAssetMarket();
         InvestmentUseCase investmentUseCase = new InvestmentUseCase(accountRepository, transactionRepository, transactionFactory, market);
 
         // 4. Configurando Interface de Linha de Comando (JLine) e Inicializando

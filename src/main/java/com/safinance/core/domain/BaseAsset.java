@@ -36,6 +36,11 @@ public abstract class BaseAsset implements Asset {
     }
 
     @Override
+    public double getVolatility() {
+        return volatility;
+    }
+
+    @Override
     public double calculateNextPrice(double currentPrice) {
         double randomFactor = 1.0 + (RANDOM.nextGaussian() * volatility);
         double nextPrice = Math.max(1.0, currentPrice * randomFactor);

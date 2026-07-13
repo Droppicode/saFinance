@@ -5,64 +5,33 @@ import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.report.AccountDetailedStatement;
 import com.safinance.core.domain.report.GlobalBalanceStatement;
+import com.safinance.view.AbstractMenu;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Menu responsável por gerar e exibir os relatórios financeiros.
  */
-public class ReportMenu implements BaseMenu {
+public class ReportMenu extends AbstractMenu {
 
     private final User user;
     private final MenuContext ctx;
-    private final BaseMenu previousMenu;
-
-    private final Map<String, Function<PromptService, BaseMenu>> transitions = new HashMap<>();
 
     public ReportMenu(User user, MenuContext ctx, BaseMenu previousMenu) {
         this.user = user;
         this.ctx = ctx;
-        this.previousMenu = previousMenu;
         
-        registerTransition("1", this::generateAccountDetailedStatement, transitions);
-        registerTransition("2", this::generateGlobalBalanceStatement, transitions);
-        registerTransition("0", prompt -> previousMenu, transitions);
+        registerCommand("1", "Extrato Detalhado de Conta", this::generateAccountDetailedStatement);
+        registerCommand("2", "Balanço Financeiro Global", this::generateGlobalBalanceStatement);
+        registerCommand("0", "Voltar", prompt -> previousMenu);
     }
 
     @Override
-    public void renderHeader(PromptService promptService) {
+    protected void printHeader(PromptService promptService) {
         promptService.printHeader("Extratos e Relatórios");
-        promptService.printMenuOptions(
-                "Extrato Detalhado de Conta",
-                "Balanço Financeiro Global"
-        );
-    }
-
-    @Override
-    public List<String> getOptions() {
-        return new ArrayList<>(transitions.keySet());
-    }
-
-    @Override
-    public BaseMenu handleInput(PromptService promptService) {
-        String option = promptService.readString("> Escolha uma opção: ").trim();
-
-        Function<PromptService, BaseMenu> transition = transitions.get(option);
-
-        if (transition != null) {
-            return transition.apply(promptService);
-        } else {
-            promptService.printError("Opção inválida.");
-            promptService.readString("Pressione Enter para tentar novamente.");
-            return this;
-        }
     }
 
     private BaseMenu generateAccountDetailedStatement(PromptService promptService) {

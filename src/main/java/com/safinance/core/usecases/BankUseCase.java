@@ -2,7 +2,7 @@ package com.safinance.core.usecases;
 
 import java.time.YearMonth;
 import com.safinance.core.domain.Bank;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 
 public class BankUseCase {
 

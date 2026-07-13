@@ -230,6 +230,13 @@ classDiagram
     }
     TransactionFactory ..> Transaction : creates (instancia)
 
+    class UserVisitor~T~ {
+        <<interface>>
+        +visitAdmin(AdminUser admin) T
+        +visitRegular(RegularUser regular) T
+    }
+    User ..> UserVisitor : accept()
+
     class FinancialStatementTemplate {
         <<abstract>>
         +generateReport(User user, List~Account~ accounts, List~Transaction~ transactions)
@@ -253,13 +260,13 @@ classDiagram
         +T findById(String id)
         +List~T~ findAll()
     }
-    class JsonRepository~T~ {
+    class JsonlRepository~T~ {
         -String filePath
         +save(T entity)
         +T findById(String id)
         +List~T~ findAll()
     }
-    DataRepository <|.. JsonRepository
+    DataRepository <|.. JsonlRepository
     DataRepository ..> Entity : manages (gerencia)
 
     %% ----------------------------------------------------
@@ -316,21 +323,33 @@ classDiagram
     class ConsoleView {
         +start()
     }
-    class LoginMenu {
-        +showMenu()
+    class BaseMenu {
+        <<interface>>
+        +List~String~ getOptions()
+        +renderHeader(PromptService promptService)
+        +handleInput(PromptService promptService) BaseMenu
     }
-    class UserMenu {
-        +showMenu(User session)
+    class AbstractMenu {
+        <<abstract>>
+        -Map~String, MenuCommand~ commands
+        #registerCommand(String key, String label, Function action)
+        #printHeader(PromptService promptService)
     }
-    class AdminMenu {
-        +showMenu(AdminUser session)
-    }
-    class InvestmentMenu {
-        +showMenu(WalletAccount sessionAccount)
-    }
-    class ReportMenu {
-        +showMenu()
-    }
+    class MenuContext
+    
+    BaseMenu <|.. AbstractMenu
+
+    class LoginMenu
+    class UserMenu
+    class AdminMenu
+    class InvestmentMenu
+    class ReportMenu
+    
+    AbstractMenu <|-- LoginMenu
+    AbstractMenu <|-- UserMenu
+    AbstractMenu <|-- AdminMenu
+    AbstractMenu <|-- InvestmentMenu
+    AbstractMenu <|-- ReportMenu
     
     %% A MainView delega para os sub-menus
     ConsoleView --> LoginMenu : delegates
@@ -365,6 +384,7 @@ classDiagram
     style Asset fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
     style TaxStrategy fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
     style CapitalGainsTaxStrategy fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
+    style UserVisitor fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#fff
 
     %% DOMAIN - CLASSES ABSTRATAS (Azul Médio com Borda Tracejada)
     style FinancialStatementTemplate fill:#1e88e5,stroke:#0d47a1,stroke-width:2px,stroke-dasharray: 5 5,color:#fff
@@ -400,9 +420,12 @@ classDiagram
     style InvestmentUseCase fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
 
     style DataRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
-    style JsonRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    style JsonlRepository fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
 
     style ConsoleView fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style BaseMenu fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style AbstractMenu fill:#ce93d8,stroke:#6a1b9a,stroke-width:2px,color:#000
+    style MenuContext fill:#e1bee7,stroke:#8e24aa,stroke-width:2px,color:#000
     style LoginMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style UserMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
     style AdminMenu fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:#fff
@@ -420,9 +443,19 @@ A arquitetura do `ObjectFinance` foi desenhada com base em princípios rigorosos
 | :--- | :--- | :--- |
 | **Strategy** | `TaxStrategy`, `CapitalGainsTaxStrategy` | Isola os algoritmos de cálculo de impostos (padrão, isento, ações, FIIs). Evita múltiplos blocos de `if/else` no domínio, permitindo plugar novas regras tributárias sem quebrar as transações e o motor de contas. |
 | **Factory Method** | `TransactionFactory` | Centraliza a complexidade de instanciar transações financeiras. Oculta os detalhes de inicialização (data, validações) e blinda os Casos de Uso, que interagem apenas com a abstração `Transaction`. |
-| **Template Method** | `FinancialStatementTemplate` | Define o "esqueleto" algorítmico da geração de extratos. Enquanto os cabeçalhos/rodapés são gerados no método principal da classe mãe abstrata, as subclasses (`AccountDetailedStatement`, etc.) sobrescrevem apenas a formatação do corpo. |
+| **Template Method** | `FinancialStatementTemplate` e `AbstractMenu` | No extrato, define o esqueleto algorítmico da geração dos dados. Na interface do usuário, em conjunto com o Command, o `AbstractMenu` gerencia o loop de inputs, evitando repetição de código em cada menu. |
+| **Command** | `AbstractMenu` e Subclasses de Menu | Erradica estruturas condicionais gigantescas (`if/else` ou `switch/case`) nos menus. As opções são registradas como comandos (lambdas) em um mapa, garantindo o Princípio Aberto/Fechado (OCP) ao adicionar novas telas. |
+| **Visitor** | `UserVisitor` | Resolve o problema de Polimorfismo Duplo (Double Dispatch). Permite estender as opções de menus baseadas no tipo de usuário logado (Admin vs Regular) sem poluir as entidades de domínio com a regra de interface, e eliminando verificações de cast ou `instanceof`. |
 
-### 4.2. Princípios S.O.L.I.D.
+### 4.2. Princípios S.O.L.I.D. e Acrônimo TRUE
+
+O design do código orienta-se pela qualidade e consistência estipulada pelo Acrônimo **TRUE**:
+*   **Transparent (Transparente):** As dependências são explícitas (ex: Injeção do `Repository` via construtor nos `UseCases`), tornando as consequências de qualquer mudança óbvias e previsíveis.
+*   **Reasonable (Razoável):** O nível de abstração é justificado. O uso de padrões como *Command* evitou um código espaguete, trazendo um custo de mudança baixo, proporcional ao benefício de manutenção.
+*   **Usable (Usável/Reutilizável):** Entidades como `WalletAccount` e lógicas de `Bank` podem ser reutilizadas perfeitamente tanto no motor transacional quanto na geração de extratos sem gambiarras.
+*   **Exemplary (Exemplar):** O uso rigoroso da Imutabilidade (Wither) e a inversão de dependência de Infra definem um padrão seguro que o resto da base de código imita naturalmente.
+
+Além disso, os preceitos essenciais do **SOLID** foram validados na arquitetura:
 
 | Princípio | Evidência na Implementação | Benefício Alcançado |
 | :--- | :--- | :--- |
@@ -430,7 +463,7 @@ A arquitetura do `ObjectFinance` foi desenhada com base em princípios rigorosos
 | **O**CP *(Aberto/Fechado)* | Hierarquia de `Asset` | Para introduzir "Criptomoedas" no sistema, basta criar um novo `Asset` e uma nova `TaxStrategy`. A lógica central da `WalletAccount` permanece intacta (fechada para modificação, aberta para extensão). |
 | **L**SP *(Substituição de Liskov)* | Métodos `.process(Transaction)` | As subclasses de `Account` honram contratos base. Qualquer conta pode ser processada uniformemente pelo polimorfismo sem quebrar o estado financeiro. |
 | **I**SP *(Segregação de Interfaces)* | Diferenciação de `Tax` e `CapitalGains` | A tributação sobre venda de ativos exige parâmetros como lucros e tempo de posse, enquanto a tributação bancária é simples. A separação das interfaces não obriga contas correntes simples a dependerem de lógicas de "Home Broker". |
-| **D**IP *(Inversão de Dependência)* | `DataRepository<T>` | Os Casos de Uso conversam com o "Porta" (interface abstrata). O sistema não conhece o banco de dados. A implementação JSON (`JsonRepository`) está numa camada fraca (Infra) e acoplada através da injeção de dependência. |
+| **D**IP *(Inversão de Dependência)* | `DataRepository<T>` | Os Casos de Uso conversam com o "Porta" (interface abstrata). O sistema não conhece o banco de dados. A implementação JSON (`JsonlRepository`) está numa camada fraca (Infra) e acoplada através da injeção de dependência. |
 
 ### 4.3. GRASP & Regras de Domínio
 
@@ -439,7 +472,14 @@ A arquitetura do `ObjectFinance` foi desenhada com base em princípios rigorosos
 | **Creator** | `TransactionFactory` | Regra direta: quem possui o conhecimento para inicializar o objeto, o cria. |
 | **Controller** | `UseCases` (Layer Verde) | Coordenam as requisições que vêm dos menus da View, manipulando entidades e chamando o repositório. Protegem o domínio de vazamentos lógicos para a UI. |
 | **Information Expert** | `AssetPosition` | Detém total soberania e expertise dos dados. Ela é a *única* classe que sabe calcular o Preço Médio (Average Price) quando novas cotas são adicionadas. |
-| **Blindagem / Fail-Fast** | `Account.process()` / Padrão Wither | Como regra do *Domain-Driven Design (DDD)* em modelos ricos, não existem `setters` públicos anêmicos. Operações falham imediatamente ao violar a realidade (ex: falta de saldo, cota inválida).
+| **Blindagem / Fail-Fast** | `Account.process()` / Padrão Wither | Como regra do *Domain-Driven Design (DDD)* em modelos ricos, não existem `setters` públicos anêmicos. Operações falham imediatamente ao violar a realidade (ex: falta de saldo, cota inválida). |
+
+### 4.4. Gestão Estruturada de Falhas (Filosofia Fail-Fast)
+
+Seguindo as diretrizes de proteger o sistema contra estados inválidos, adotamos o padrão **Fail-Fast**.
+
+*   **Exceções de Domínio (Unchecked):** Criamos as classes `InvalidTransactionException` e `InsufficientFundsException` (estendendo de `RuntimeException`). Isso garante que, se uma `Account` tentar sacar um valor maior do que o limite, a exceção é lançada imediatamente, bloqueando a transação. O sistema de View captura o erro e informa o usuário amigavelmente, sem causar *"crashes"* ou sujar o console com *stack traces*.
+*   **Isolamento de Erros de Infraestrutura (Checked):** Quando uma operação I/O falha (ex: `IOException` ao tentar ler o arquivo `.jsonl`), essa exceção é capturada *apenas* na camada do repositório (`JsonlRepository`). Ela é encapsulada em uma *Unchecked Exception* genérica, garantindo que detalhes da implementação do sistema de arquivos não vazem para o Domínio ou para o Usuário.
 
 ## 5. Guia de Execução
 
@@ -469,4 +509,27 @@ O projeto possui uma suíte de testes unitários que valida as regras de negóci
 mvn test
 ```
 
-> **Dica:** Os dados persistidos da aplicação são salvos localmente na pasta `data/` em formato `.json` por padrão. Se desejar resetar o banco de dados da aplicação para testar com um ambiente limpo, basta apagar o conteúdo ou deletar os arquivos dentro do diretório `data/`.
+> **Dica:** Os dados persistidos da aplicação são salvos localmente na pasta `data/` em formato `.jsonl` por padrão. Se desejar resetar o banco de dados da aplicação para testar com um ambiente limpo, basta apagar o conteúdo ou deletar os arquivos dentro do diretório `data/`.
+
+### 5.4. Execução via Dev Container (Recomendado)
+
+O projeto está configurado para ser executado de forma fluida e padronizada através de um **Dev Container**, garantindo que o ambiente de desenvolvimento seja idêntico para todos que o executarem, dispensando a necessidade de instalar as dependências de sistema (como Java 17 e Maven) na máquina host.
+
+Para executar usando Dev Containers:
+1. Abra a pasta do projeto no **Visual Studio Code**.
+2. Certifique-se de ter a extensão **Dev Containers** (da Microsoft) instalada e o **Docker** rodando em sua máquina.
+3. Ao abrir o repositório, o VS Code exibirá uma notificação sugerindo reabrir a pasta no container. Clique em **"Reopen in Container"** (ou acesse a Paleta de Comandos `Ctrl+Shift+P` e digite `Dev Containers: Reopen in Container`).
+4. O container será construído automaticamente contendo o ambiente Java, o Maven e todas as extensões necessárias para o projeto.
+5. Uma vez dentro do container, basta abrir o terminal integrado do VS Code (`Ctrl + \``) e executar os comandos de compilação ou testes (ex: `mvn clean compile` e `mvn exec:java -Dexec.mainClass="com.safinance.Main"`) que rodarão nativamente no Linux do container.
+
+## 6. Divisão Detalhada de Tarefas
+
+Conforme exigido pelos critérios de avaliação do projeto, o desenvolvimento foi dividido colaborativamente. Atribuímos lideranças técnicas focadas nas diferentes frentes da arquitetura para garantir eficiência e domínio pleno do código:
+
+| Membro do Grupo | RA | Responsabilidades Principais (Frentes de Atuação) |
+| :--- | :--- | :--- |
+| **Marcos Menezes Nunes** | 193438 | **Arquitetura e Integração:** Inicialização da persistência e do Adaptador de Tipos Polimórficos (Gson) para preservação de herança no JSON. Estruturação das classes principais, motor de relatórios (Padrão *Template Method*), e atuação como Líder Técnico na integração do código, revisão por pares e correções gerais do sistema. |
+| **João Francisco Silva Freitas** | 281254 | **Motor Bancário e de Mercado:** Modelagem profunda da entidade `Bank` e do sistema de taxas (Padrão *Strategy*). Responsável pela atualização de rendimentos e investimentos em tempo de execução, além da persistência do Mercado para sincronização de cotações em tempo real. |
+| **Murilo Piovezana** | 256999 | **Gestão de Investimentos e Ativos:** Desenvolvimento completo do módulo de investimentos. Design das abstrações de Ativos, implementação do menu de investimentos (Padrão *Command*) e orquestração dos fluxos complexos de transações de compra e venda, garantindo a imutabilidade do portfólio. |
+| **Vinicius Espirito Santo Mamedi** | 184712 | **Sistema Transacional Base:** Engenharia do motor de transações primárias (Receitas, Despesas e Transferências). Encapsulamento da criação de instâncias via Padrão *Factory Method* (`TransactionFactory`), garantindo integridade de estado e validações à prova de falhas nas lógicas de saque e depósito. |
+| **Vinicius Marinheiro** | 296073 | **Controle de Acesso e Interface:** Construção da camada de Segurança (`AuthUseCase`) e controle de sessão. Refatoração arquitetural das interfaces de usuário (`AdminMenu`, `UserMenu`, `WelcomeMenu`) aplicando separação de responsabilidades e o Padrão *Visitor* para controle de permissões dinâmicas (Admin vs Regular). |

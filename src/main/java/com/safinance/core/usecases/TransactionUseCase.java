@@ -9,7 +9,7 @@ import com.safinance.core.exception.InvalidTransactionException;
 import com.safinance.core.exception.AccountNotFoundException;
 import java.time.YearMonth;
 import java.util.List;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 import com.safinance.core.domain.SavingsAccount;
 import java.time.temporal.ChronoUnit;
 
@@ -149,8 +149,6 @@ public class TransactionUseCase {
             throw new InvalidTransactionException("Calculated tax must be finite and non-negative.");
         }
 
-        bank.collectFee(tax);
-
         double totalDebit = amount + tax;
 
         if (!Double.isFinite(totalDebit)) {
@@ -169,6 +167,9 @@ public class TransactionUseCase {
         Account updatedSourceAccount = sourceAccount.process(expenseTransaction);
 
         Account updatedDestinationAccount = destinationAccount.process(incomeTransaction);
+
+        // Somente se ambos os processos acima não lançarem exceção (ex: falta de saldo), cobramos a taxa do banco
+        bank.collectFee(tax);
 
         accountRepository.saveAll(List.of(updatedSourceAccount, updatedDestinationAccount));
         transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));
@@ -263,7 +264,7 @@ public class TransactionUseCase {
     private Account findAccount(String accountId) {
         validateAccountId(accountId, "Account");
 
-        Account account = accountRepository.findById(accountId);
+        Account account = accountRepository.findById(accountId).orElse(null);
 
         if (account == null) {
             throw new AccountNotFoundException("Account not found: " + accountId);

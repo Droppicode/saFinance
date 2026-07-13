@@ -3,4 +3,5 @@ public interface Asset extends Entity {
     String getTicker();
     String getName();
     double calculateNextPrice(double currentPrice);
+    double getVolatility();
 }

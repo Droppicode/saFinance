@@ -2,6 +2,7 @@ package com.safinance.core.usecases;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.safinance.core.domain.Account;
 import com.safinance.core.domain.Asset;
@@ -10,7 +11,7 @@ import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.User;
 import com.safinance.core.domain.Transaction;
 import com.safinance.core.domain.TransactionFactory;
-import com.safinance.infra.persistence.Repository;
+import com.safinance.core.ports.Repository;
 import com.safinance.core.exception.AccountNotFoundException;
 import com.safinance.core.exception.AssetNotFoundException;
 
@@ -35,22 +36,20 @@ public class InvestmentUseCase {
         this.market = market;
     }
 
-    public WalletAccount getWalletAccountByUserAndName(User user, String walletName) {
+    public Optional<WalletAccount> getWalletAccountByUserAndName(User user, String walletName) {
         return accountRepository.findAll().stream()
             .filter(account -> account instanceof WalletAccount)
             .map(account -> (WalletAccount) account)
             .filter(account -> account.getOwnerId().equals(user.getId()) && account.getName().equals(walletName))
-            .findFirst()
-            .orElse(null);
+            .findFirst();
     }
 
-    public WalletAccount getWalletAccountByUser(User user) {
+    public Optional<WalletAccount> getWalletAccountByUser(User user) {
         return accountRepository.findAll().stream()
             .filter(account -> account.isOwnedBy(user.getId()))
             .filter(WalletAccount.class::isInstance)
             .map(WalletAccount.class::cast)
-            .findFirst()
-            .orElse(null);
+            .findFirst();
     }
 
     public List<WalletAccount> getWalletAccountsByUser(User user) {
@@ -118,5 +117,17 @@ public class InvestmentUseCase {
             throw new AssetNotFoundException("Preço não disponível para o ativo: " + ticker);
         }
         return price;
+    }
+
+    public void advanceOneBlock() {
+        market.advanceOneBlock();
+    }
+
+    public void catchUpToNow() {
+        market.catchUpToNow();
+    }
+
+    public List<String> getMarketSummary() {
+        return market.marketSummary();
     }
 }

@@ -1,26 +1,21 @@
 package com.safinance.view.menus;
 
 import com.safinance.core.domain.Asset;
-import com.safinance.core.domain.AssetMarket;
 import com.safinance.core.domain.WalletAccount;
 import com.safinance.core.domain.User;
+import com.safinance.view.AbstractMenu;
 import com.safinance.view.BaseMenu;
 import com.safinance.view.MenuContext;
 import com.safinance.view.PromptService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 
-public class InvestmentMenu implements BaseMenu {
+public class InvestmentMenu extends AbstractMenu {
 
     private final User accountOwner;
     private final MenuContext ctx;
     private final BaseMenu previousMenu;
     private final String selectedWalletName;
-    private final Map<String, Supplier<BaseMenu>> transitions = new HashMap<>();
 
     public InvestmentMenu(User accountOwner, MenuContext ctx, BaseMenu previousMenu) {
         this(accountOwner, ctx, previousMenu, null);
@@ -32,17 +27,54 @@ public class InvestmentMenu implements BaseMenu {
         this.previousMenu = previousMenu;
         this.selectedWalletName = selectedWalletName;
 
-        registerTransition("1", () -> this, transitions);
-        registerTransition("2", () -> this, transitions);
-        registerTransition("3", () -> this, transitions);
-        registerTransition("0", () -> previousMenu, transitions);
+        registerCommand("1", "Comprar ativo", prompt -> {
+            WalletAccount wallet = fetchWallet(prompt);
+            if (wallet == null) {
+                prompt.printWarning("Não é possível comprar sem uma conta carteira.");
+                prompt.readString("Pressione Enter para voltar.");
+                return this;
+            }
+            return handleBuy(prompt, wallet);
+        });
+
+        registerCommand("2", "Vender ativo", prompt -> {
+            WalletAccount wallet = fetchWallet(prompt);
+            if (wallet == null || wallet.getPortfolio().isEmpty()) {
+                prompt.printWarning("Não há ativos para vender.");
+                prompt.readString("Pressione Enter para voltar.");
+                return this;
+            }
+            return handleSell(prompt, wallet);
+        });
+
+        registerCommand("3", "Ver portfólio", prompt -> {
+            WalletAccount wallet = fetchWallet(prompt);
+            showPortfolio(prompt, wallet);
+            return this;
+        });
+
+        registerCommand("0", "Voltar", prompt -> previousMenu);
+    }
+
+    private WalletAccount fetchWallet(PromptService promptService) {
+        List<WalletAccount> wallets = ctx.investmentUseCase().getWalletAccountsByUser(accountOwner);
+
+        if (wallets == null || wallets.isEmpty()) {
+            return null;
+        } else if (selectedWalletName != null) {
+            return ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName).orElse(null);
+        } else if (wallets.size() > 1) {
+            List<String> walletsStrings = wallets.stream().map(WalletAccount::getName).toList();
+            String wantedWallet = promptService.readWithOptions("Selecione a carteira de investimentos que você quer acessar: ", walletsStrings);
+            return ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, wantedWallet).orElse(null);
+        } else {
+            return wallets.getFirst();
+        }
     }
 
     @Override
-    public void renderHeader(PromptService promptService) {
-        // Aplica os blocos de 10s decorridos fora desta tela (ou com o app
-        // fechado); sem isso os preços ficam congelados entre uma visita e outra.
-        AssetMarket.catchUpToNow();
+    protected void printHeader(PromptService promptService) {
+        ctx.investmentUseCase().catchUpToNow();
         promptService.printHeader("Área de Investimentos");
         List<WalletAccount> wallets = ctx.investmentUseCase().getWalletAccountsByUser(accountOwner);
 
@@ -51,8 +83,7 @@ public class InvestmentMenu implements BaseMenu {
             promptService.printInfo("");
             promptService.printInfo("Você pode criar uma conta carteira no menu de gerenciamento de contas.");
         } else if (selectedWalletName != null) {
-            // Buscar a carteira atualizada pelo nome
-            WalletAccount selectedWallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName);
+            WalletAccount selectedWallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName).orElse(null);
             
             if (selectedWallet != null) {
                 promptService.printInfo(String.format("Carteira selecionada: %s", selectedWallet.getName()));
@@ -65,23 +96,12 @@ public class InvestmentMenu implements BaseMenu {
                     selectedWallet.getPortfolio().values().forEach(position -> {
                         Asset asset = position.getAsset();
                         promptService.printInfo(String.format("  - %s: %.4f unidades a R$ %.2f (Preço médio: R$ %.2f)",
-                            asset.getTicker(), position.getQuantity(), AssetMarket.priceFor(asset.getTicker()), position.getAveragePrice()));
+                            asset.getTicker(), position.getQuantity(), ctx.investmentUseCase().getAssetPrice(asset.getTicker()), position.getAveragePrice()));
                     });
                 }
             }
         }
-
         promptService.printInfo("");
-        promptService.printMenuOptions(
-            "Comprar ativo",
-            "Vender ativo",
-            "Ver portfólio"
-        );
-    }
-
-    @Override
-    public List<String> getOptions() {
-        return new ArrayList<>(transitions.keySet());
     }
 
     @Override
@@ -91,10 +111,15 @@ public class InvestmentMenu implements BaseMenu {
             10_000L,
             () -> {
                 try {
-                    AssetMarket.advanceOneBlock();
+                    ctx.investmentUseCase().advanceOneBlock();
                     StringBuilder block = new StringBuilder("\n══════════════════════════════════════════════\n        Área de Investimentos\n══════════════════════════════════════════════");
                     
-                    WalletAccount wallet = ctx.investmentUseCase().getWalletAccountByUser(accountOwner);
+                    WalletAccount wallet = null;
+                    if (selectedWalletName != null) {
+                        wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName).orElse(null);
+                    } else {
+                        wallet = ctx.investmentUseCase().getWalletAccountByUser(accountOwner).orElse(null);
+                    }
                     if (wallet != null) {
                         block.append("\nSaldo disponível: R$ ").append(String.format("%.2f", wallet.getBalance()));
                         block.append("\n\nPortfólio atual:");
@@ -104,7 +129,7 @@ public class InvestmentMenu implements BaseMenu {
                             double totalValor = 0;
                             for (var position : wallet.getPortfolio().values()) {
                                 Asset asset = position.getAsset();
-                                double currentPrice = AssetMarket.priceFor(asset.getTicker());
+                                double currentPrice = ctx.investmentUseCase().getAssetPrice(asset.getTicker());
                                 double totalPosition = position.getQuantity() * currentPrice;
                                 double gainLoss = totalPosition - (position.getQuantity() * position.getAveragePrice());
                                 String gainLossStr = gainLoss >= 0 ? "+" : "";
@@ -125,110 +150,56 @@ public class InvestmentMenu implements BaseMenu {
                     block.append("\n\n1 - Comprar ativo");
                     block.append("\n2 - Vender ativo");
                     block.append("\n3 - Ver portfólio");
-                    block.append("\n0 - Voltar/Sair");
+                    block.append("\n0 - Voltar");
                     
                     promptService.printLive(block.toString());
                 } catch (Exception ignored) {
-                    // Um erro pontual no refresh não deve derrubar a thread.
                 }
             }
         );
 
-        Supplier<BaseMenu> transition = transitions.get(option);
-
-        if (transition == null) {
-            promptService.printError("Opção inválida.");
-            promptService.readString("Pressione Enter para tentar novamente.");
-            return this;
-        }
-        
-        List<WalletAccount> wallets = ctx.investmentUseCase().getWalletAccountsByUser(accountOwner);
-        WalletAccount wallet = null;
-
-        if (wallets == null || wallets.isEmpty()) {
-            wallet = null;
-        } else if (selectedWalletName != null) {
-            // Buscar a carteira atualizada pelo nome
-            wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName);
-        } else if (wallets.size() > 1) {
-            List<String> walletsStrings = wallets.stream().map(WalletAccount::getName).toList();
-            String wantedWallet = promptService.readWithOptions("Selecione a carteira de investimentos que você quer acessar: ", walletsStrings);
-            wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, wantedWallet);
-        } else {
-            wallet = wallets.getFirst();
-        }
-
-        switch (option) {
-            case "1":
-                if (wallet == null) {
-                    promptService.printWarning("Não é possível comprar sem uma conta carteira.");
-                    promptService.readString("Pressione Enter para voltar.");
-                    return this;
-                }
-                return handleBuy(promptService, wallet);
-            case "2":
-                if (wallets == null || wallet == null || wallet.getPortfolio().isEmpty()) {
-                    promptService.printWarning("Não há ativos para vender.");
-                    promptService.readString("Pressione Enter para voltar.");
-                    return this;
-                }
-                return handleSell(promptService, wallet);
-            case "3":
-                showPortfolio(promptService, wallet);
-                return this;
-            case "0":
-                return transition.get();
-            default:
-                promptService.printError("Opção inválida.");
-                promptService.readString("Pressione Enter para tentar novamente.");
-                return this;
-        }
+        return processOption(promptService, option);
     }
 
     private BaseMenu handleBuy(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos disponíveis:");
-        AssetMarket.marketSummary().forEach(promptService::printInfo);
+        ctx.investmentUseCase().getMarketSummary().forEach(promptService::printInfo);
         promptService.printInfo("");
         promptService.printInfo("(Os preços atualizam automaticamente a cada 10s.)");
 
-        // Refresh ao vivo: enquanto o usuário escolhe o ativo, uma thread em segundo
-        // plano avança o mercado a cada 10s e reimprime a lista acima do prompt.
         String ticker = promptService.readStringWithRefresh(
             "Digite o ticker do ativo que deseja comprar: ",
             10_000L,
             () -> {
                 try {
-                    AssetMarket.advanceOneBlock();
+                    ctx.investmentUseCase().advanceOneBlock();
                     String stamp = java.time.LocalTime.now().withNano(0).toString();
-                    // Bloco único: uma só chamada de printLive = um só redraw do prompt.
                     StringBuilder block = new StringBuilder("── Ativos disponíveis [" + stamp + "] ──");
-                    AssetMarket.marketSummary().forEach(line -> block.append('\n').append(line));
+                    ctx.investmentUseCase().getMarketSummary().forEach(line -> block.append('\n').append(line));
                     promptService.printLive(block.toString());
                 } catch (Exception ignored) {
-                    // Um erro pontual no refresh não deve derrubar a thread.
                 }
             }
         );
-        Asset asset = AssetMarket.findByTicker(ticker);
-        if (asset == null || AssetMarket.priceFor(asset.getTicker()) == null) {
+        
+        Asset asset;
+        try {
+            asset = ctx.investmentUseCase().findAssetByTicker(ticker);
+            ctx.investmentUseCase().getAssetPrice(asset.getTicker());
+        } catch (Exception e) {
             promptService.printError("Ticker inválido ou não disponível.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
         }
 
-        double quantity;
-        try {
-            quantity = Double.parseDouble(promptService.readString("Quantidade a comprar: ").trim());
-            if (quantity <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
+        Double quantity = promptService.readDouble("Quantidade a comprar: ");
+        if (quantity == null || quantity <= 0) {
             promptService.printError("Quantidade inválida.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
         }
 
-        // O preço é o vigente no momento da compra, não o da listagem inicial —
-        // ele pode ter mudado durante os refreshes.
-        double price = AssetMarket.priceFor(asset.getTicker());
+        double price = ctx.investmentUseCase().getAssetPrice(asset.getTicker());
         try {
             WalletAccount updated = ctx.investmentUseCase().buyAsset(wallet, asset, quantity, price);
             promptService.printSuccess(String.format("Compra concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", asset.getTicker(), quantity, price, updated.getBalance()));
@@ -243,10 +214,10 @@ public class InvestmentMenu implements BaseMenu {
     private BaseMenu handleSell(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos no portfólio:");
         wallet.getPortfolio().values().forEach(position ->
-            promptService.printInfo(String.format("  - %s: %.0f unidades", position.getAssetTicker(), position.getQuantity())));
+            promptService.printInfo(String.format("  - %s: %.4f unidades", position.getAssetTicker(), position.getQuantity())));
         promptService.printInfo("");
 
-        String ticker = promptService.readString("Digite o ticker do ativo que deseja vender: ").trim();
+        String ticker = promptService.readString("Digite o ticker do ativo que deseja vender: ").trim().toUpperCase();
         var position = wallet.getPortfolio().get(ticker);
         if (position == null) {
             promptService.printError("Ticker não encontrado no portfólio.");
@@ -254,20 +225,17 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        double quantity;
-        try {
-            quantity = Double.parseDouble(promptService.readString("Quantidade a vender: ").trim());
-            if (quantity <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
+        Double quantity = promptService.readDouble("Quantidade a vender: ");
+        if (quantity == null || quantity <= 0) {
             promptService.printError("Quantidade inválida.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
         }
 
-        double price = AssetMarket.priceFor(position.getAssetTicker());
+        double price = ctx.investmentUseCase().getAssetPrice(position.getAssetTicker());
         try {
             WalletAccount updated = ctx.investmentUseCase().sellAsset(wallet, ticker, quantity, price);
-            promptService.printSuccess(String.format("Venda concluída: %s x %.0f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
+            promptService.printSuccess(String.format("Venda concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
         } catch (Exception e) {
             promptService.printError("Erro ao vender ativo: " + e.getMessage());
         }
@@ -285,7 +253,7 @@ public class InvestmentMenu implements BaseMenu {
 
         promptService.printInfo("Portfólio detalhado:");
         wallet.getPortfolio().values().forEach(position -> {
-            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), AssetMarket.priceFor(position.getAssetTicker())));
+            promptService.printInfo(String.format("- %s (%s): %.4f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(position.getAssetTicker())));
         });
         promptService.readString("Pressione Enter para voltar.");
     }

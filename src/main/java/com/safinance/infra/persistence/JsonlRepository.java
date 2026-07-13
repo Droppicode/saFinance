@@ -2,6 +2,7 @@ package com.safinance.infra.persistence;
 
 import com.google.gson.Gson;
 import com.safinance.core.domain.Entity;
+import com.safinance.core.ports.Repository;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A repository implementation that uses JSONL (JSON Lines) files for append-only persistence.
@@ -72,8 +74,8 @@ public class JsonlRepository<T extends Entity> implements Repository<T, String> 
     }
 
     @Override
-    public T findById(String id) {
-        return memoryCache.get(id);
+    public Optional<T> findById(String id) {
+        return Optional.ofNullable(memoryCache.get(id));
     }
 
     @Override

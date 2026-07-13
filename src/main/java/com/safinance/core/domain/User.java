@@ -11,4 +11,5 @@ public interface User extends Entity {
         return getRole() == Role.ADMIN;
     }
     Role getRole();
+    <T> T accept(UserVisitor<T> visitor);
 }
