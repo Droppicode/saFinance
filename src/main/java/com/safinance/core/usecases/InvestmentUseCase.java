@@ -24,13 +24,30 @@ public class InvestmentUseCase {
         this.accountRepository = accountRepository;
     }
 
-    public WalletAccount getWalletAccount(User user) {
+    public WalletAccount getWalletAccountByUserAndName(User user, String walletName) {
+        return accountRepository.findAll().stream()
+            .filter(account -> account instanceof WalletAccount)
+            .map(account -> (WalletAccount) account)
+            .filter(account -> account.getOwnerId().equals(user.getId()) && account.getName().equals(walletName))
+            .findFirst()
+            .orElse(null);
+    }
+
+    public WalletAccount getWalletAccountByUser(User user) {
         return accountRepository.findAll().stream()
             .filter(account -> account instanceof WalletAccount)
             .map(account -> (WalletAccount) account)
             .filter(account -> account.getOwnerId().equals(user.getId()))
             .findFirst()
             .orElse(null);
+    }
+
+    public List<WalletAccount> getWalletAccountsByUser(User user) {
+        return accountRepository.findAll().stream()
+            .filter(account -> account instanceof WalletAccount)
+            .map(account -> (WalletAccount) account)
+            .filter(account -> account.getOwnerId().equals(user.getId()))
+            .toList();
     }
 
     public WalletAccount buyAsset(WalletAccount wallet, Asset asset, double quantity, double pricePerUnit) {
