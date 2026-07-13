@@ -29,7 +29,10 @@ public class WelcomeMenu implements BaseMenu {
         // Registro Dinâmico de Rotas (Lab 4 State Pattern)
         registerTransition("1", () -> new LoginAction(
             ctx.authUseCase(),
-            loggedIn -> new UserMenu(loggedIn, ctx),
+            loggedIn -> {
+                ctx.transactionUseCase().catchUpSavingsYields(loggedIn);
+                return new UserMenu(loggedIn, ctx);
+            },
             () -> this
         ), transitions);
 
