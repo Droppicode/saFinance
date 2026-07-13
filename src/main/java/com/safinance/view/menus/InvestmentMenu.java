@@ -93,7 +93,12 @@ public class InvestmentMenu implements BaseMenu {
                     ctx.investmentUseCase().advanceOneBlock();
                     StringBuilder block = new StringBuilder("\n══════════════════════════════════════════════\n        Área de Investimentos\n══════════════════════════════════════════════");
                     
-                    WalletAccount wallet = ctx.investmentUseCase().getWalletAccountByUser(accountOwner);
+                    WalletAccount wallet = null;
+                    if (selectedWalletName != null) {
+                        wallet = ctx.investmentUseCase().getWalletAccountByUserAndName(accountOwner, selectedWalletName);
+                    } else {
+                        wallet = ctx.investmentUseCase().getWalletAccountByUser(accountOwner);
+                    }
                     if (wallet != null) {
                         block.append("\nSaldo disponível: R$ ").append(String.format("%.2f", wallet.getBalance()));
                         block.append("\n\nPortfólio atual:");
