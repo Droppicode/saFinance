@@ -247,7 +247,6 @@ public class PromptService {
         for (int i = 0; i < options.length; i++) {
             printInfo((i + 1) + " - " + options[i]);
         }
-        printInfo("0 - Voltar/Sair");
     }
 
     /**

@@ -56,11 +56,10 @@ public abstract class AbstractMenu implements BaseMenu {
     @Override
     public void renderHeader(PromptService promptService) {
         printHeader(promptService);
-        List<String> labels = commands.values().stream()
-                                    .map(MenuCommand::getLabel)
-                                    .toList();
-        if (!labels.isEmpty()) {
-            promptService.printMenuOptions(labels.toArray(new String[0]));
+        if (!commands.isEmpty()) {
+            for (Map.Entry<String, MenuCommand> entry : commands.entrySet()) {
+                promptService.printInfo(entry.getKey() + " - " + entry.getValue().getLabel());
+            }
         }
     }
 

@@ -53,7 +53,7 @@ public class InvestmentMenu extends AbstractMenu {
             return this;
         });
 
-        registerCommand("0", "Voltar/Sair", prompt -> previousMenu);
+        registerCommand("0", "Voltar", prompt -> previousMenu);
     }
 
     private WalletAccount fetchWallet(PromptService promptService) {
@@ -150,7 +150,7 @@ public class InvestmentMenu extends AbstractMenu {
                     block.append("\n\n1 - Comprar ativo");
                     block.append("\n2 - Vender ativo");
                     block.append("\n3 - Ver portfólio");
-                    block.append("\n0 - Voltar/Sair");
+                    block.append("\n0 - Voltar");
                     
                     promptService.printLive(block.toString());
                 } catch (Exception ignored) {
