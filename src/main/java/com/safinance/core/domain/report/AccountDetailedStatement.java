@@ -53,7 +53,7 @@ public class AccountDetailedStatement extends FinancialStatementTemplate {
                     String amountPrefix = tx.isIncome() ? "+ " : "- ";
                     
                     sb.append(String.format("%-18s | %-12s | %sR$ %-12.2f | %s\n",
-                            date, type, amountPrefix, tx.getAmount(), tx.getDescription()));
+                            date, type, amountPrefix, Math.abs(tx.getAmount()), tx.getDescription()));
                 });
 
         return sb.toString();

@@ -34,6 +34,9 @@ public class AdminUser implements User {
 
     @Override
     public boolean checkPassword(String password) {
+        if (this.passwordHash != null && this.passwordHash.length() == 64) {
+            return Objects.equals(this.passwordHash, UserFactory.hashPassword(password));
+        }
         return Objects.equals(this.passwordHash, password);
     }
 

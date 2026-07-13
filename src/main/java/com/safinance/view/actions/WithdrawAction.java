@@ -1,10 +1,6 @@
 package com.safinance.view.actions;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Supplier;
 
 import com.safinance.core.domain.Account;
@@ -40,7 +36,7 @@ public class WithdrawAction implements BaseMenu {
 
     @Override
     public List<String> getOptions() {
-        return Collections.emptyList();
+        return List.of();
     }
 
     @Override
@@ -66,15 +62,9 @@ public class WithdrawAction implements BaseMenu {
             return onComplete.get();
         }
 
-        double amount;
-        try {
-            String amountInput = promptService.readString("Valor da retirada: ").trim();
-            amount = NumberFormat.getInstance(new Locale("pt", "BR")).parse(amountInput).doubleValue();
-            if (!Double.isFinite(amount) || amount <= 0) {
-                throw new ParseException("Invalid amount", 0);
-            }
-        } catch (ParseException exception) {
-            promptService.printError("O valor da retirada deve ser um número maior que zero.");
+        Double amount = promptService.readDouble("Valor do saque: ");
+        if (amount == null || !Double.isFinite(amount) || amount <= 0) {
+            promptService.printError("O valor do saque deve ser um número maior que zero.");
             promptService.readString("Pressione Enter para voltar ao menu de contas.");
             return onComplete.get();
         }

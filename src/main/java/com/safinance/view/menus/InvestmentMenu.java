@@ -219,11 +219,8 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        double quantity;
-        try {
-            quantity = Double.parseDouble(promptService.readString("Quantidade a comprar: ").trim());
-            if (quantity <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
+        Double quantity = promptService.readDouble("Quantidade a comprar: ");
+        if (quantity == null || quantity <= 0) {
             promptService.printError("Quantidade inválida.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
@@ -246,10 +243,10 @@ public class InvestmentMenu implements BaseMenu {
     private BaseMenu handleSell(PromptService promptService, WalletAccount wallet) {
         promptService.printInfo("Ativos no portfólio:");
         wallet.getPortfolio().values().forEach(position ->
-            promptService.printInfo(String.format("  - %s: %.0f unidades", position.getAssetTicker(), position.getQuantity())));
+            promptService.printInfo(String.format("  - %s: %.4f unidades", position.getAssetTicker(), position.getQuantity())));
         promptService.printInfo("");
 
-        String ticker = promptService.readString("Digite o ticker do ativo que deseja vender: ").trim();
+        String ticker = promptService.readString("Digite o ticker do ativo que deseja vender: ").trim().toUpperCase();
         var position = wallet.getPortfolio().get(ticker);
         if (position == null) {
             promptService.printError("Ticker não encontrado no portfólio.");
@@ -257,11 +254,8 @@ public class InvestmentMenu implements BaseMenu {
             return this;
         }
 
-        double quantity;
-        try {
-            quantity = Double.parseDouble(promptService.readString("Quantidade a vender: ").trim());
-            if (quantity <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException e) {
+        Double quantity = promptService.readDouble("Quantidade a vender: ");
+        if (quantity == null || quantity <= 0) {
             promptService.printError("Quantidade inválida.");
             promptService.readString("Pressione Enter para voltar.");
             return this;
@@ -270,7 +264,7 @@ public class InvestmentMenu implements BaseMenu {
         double price = ctx.investmentUseCase().getAssetPrice(position.getAssetTicker());
         try {
             WalletAccount updated = ctx.investmentUseCase().sellAsset(wallet, ticker, quantity, price);
-            promptService.printSuccess(String.format("Venda concluída: %s x %.0f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
+            promptService.printSuccess(String.format("Venda concluída: %s x %.4f por R$ %.2f cada. Novo saldo: R$ %.2f", ticker, quantity, price, updated.getBalance()));
         } catch (Exception e) {
             promptService.printError("Erro ao vender ativo: " + e.getMessage());
         }
@@ -288,7 +282,7 @@ public class InvestmentMenu implements BaseMenu {
 
         promptService.printInfo("Portfólio detalhado:");
         wallet.getPortfolio().values().forEach(position -> {
-            promptService.printInfo(String.format("- %s (%s): %.0f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(position.getAssetTicker())));
+            promptService.printInfo(String.format("- %s (%s): %.4f unidades | Preço médio R$ %.2f | Valor atual R$ %.2f", position.getAssetName(), position.getAssetTicker(), position.getQuantity(), position.getAveragePrice(), ctx.investmentUseCase().getAssetPrice(position.getAssetTicker())));
         });
         promptService.readString("Pressione Enter para voltar.");
     }

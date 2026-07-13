@@ -149,8 +149,6 @@ public class TransactionUseCase {
             throw new InvalidTransactionException("Calculated tax must be finite and non-negative.");
         }
 
-        bank.collectFee(tax);
-
         double totalDebit = amount + tax;
 
         if (!Double.isFinite(totalDebit)) {
@@ -169,6 +167,9 @@ public class TransactionUseCase {
         Account updatedSourceAccount = sourceAccount.process(expenseTransaction);
 
         Account updatedDestinationAccount = destinationAccount.process(incomeTransaction);
+
+        // Somente se ambos os processos acima não lançarem exceção (ex: falta de saldo), cobramos a taxa do banco
+        bank.collectFee(tax);
 
         accountRepository.saveAll(List.of(updatedSourceAccount, updatedDestinationAccount));
         transactionRepository.saveAll(List.of(expenseTransaction, incomeTransaction));

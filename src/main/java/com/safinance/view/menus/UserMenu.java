@@ -40,7 +40,7 @@ public class UserMenu implements BaseMenu {
         if (user.getRole() == Role.ADMIN) {
             registerTransition("4", () -> new AdminMenu(user, ctx), transitions);
         }
-        registerTransition("0", () -> null, transitions);
+        registerTransition("0", () -> new WelcomeMenu(ctx), transitions);
     }
 
     /**

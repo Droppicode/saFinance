@@ -35,15 +35,8 @@ public class CreateCreditAccountAction implements BaseMenu {
     public BaseMenu handleInput(PromptService promptService) {
         String name = promptService.readString("Nome da Conta de Crédito: ").trim();
         
-        double creditLimit = -1;
-        String input = promptService.readString("Qual será o limite de crédito da conta? ");
-        
-        try {
-            creditLimit = Double.parseDouble(input.trim().replace(',', '.'));
-            if (creditLimit < 0) {
-                throw new NumberFormatException("Limite não pode ser negativo.");
-            }
-        } catch (NumberFormatException e) {
+        Double creditLimit = promptService.readDouble("Qual será o limite de crédito da conta? ");
+        if (creditLimit == null || creditLimit < 0) {
             promptService.printError("Valor de limite inválido.");
             promptService.readString("Pressione Enter para voltar ao menu de contas.");
             return onComplete.get();
